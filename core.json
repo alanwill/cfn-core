@@ -213,6 +213,10 @@
       "Properties" : {
         "Tags" : [
           {
+            "Key" : "app",
+            "Value" : { "Ref" : "AppName" }
+          },
+          {
             "Key" : "stack",
             "Value" : { "Ref" : "EnvironmentName" }
           },
@@ -224,11 +228,40 @@
       }
     },
 
-    "AttachGateway" : {
+    "AttachInternetGateway" : {
        "Type" : "AWS::EC2::VPCGatewayAttachment",
        "Properties" : {
          "VpcId" : { "Ref" : "VPC" },
          "InternetGatewayId" : { "Ref" : "InternetGateway" }
+       }
+    },
+
+    "VirtualPrivateGateway" : {
+      "Type" : "AWS::EC2::VPNGateway",
+      "Properties" : {
+        "Type" : "ipsec.1",
+        "Tags" : [
+          {
+            "Key" : "app",
+            "Value" : { "Ref" : "AppName" }
+          },
+          {
+            "Key" : "stack",
+            "Value" : { "Ref" : "EnvironmentName" }
+          },
+          {
+            "Key" : "layer",
+            "Value" : "network"
+          }
+        ]
+      }
+   },
+
+   "AttachIVirtualPrivateGateway" : {
+       "Type" : "AWS::EC2::VPCGatewayAttachment",
+       "Properties" : {
+         "VpcId" : { "Ref" : "VPC" },
+         "VpnGatewayId" : { "Ref" : "VirtualPrivateGateway" }
        }
     },
 
@@ -521,6 +554,15 @@
       }
     },
 
+    "VGWRoutePropInternetRouteTable" : {
+      "Type" : "AWS::EC2::VPNGatewayRoutePropagation",
+      "DependsOn" : "InternetRouteTable",
+      "Properties" : {
+        "RouteTableIds" : [{"Ref" : "InternetRouteTable"}],
+        "VpnGatewayId" : {"Ref" : "VirtualPrivateGateway"}
+      }
+    },
+
     "InternalRouteTable" : {
       "Type" : "AWS::EC2::RouteTable",
       "Properties" : {
@@ -539,6 +581,15 @@
             "Value" : "internal"
           }
         ]
+      }
+    },
+
+    "VGWRoutePropInternalRouteTable" : {
+      "Type" : "AWS::EC2::VPNGatewayRoutePropagation",
+      "DependsOn" : "InternalRouteTable",
+      "Properties" : {
+        "RouteTableIds" : [{"Ref" : "InternalRouteTable"}],
+        "VpnGatewayId" : {"Ref" : "VirtualPrivateGateway"}
       }
     },
 
