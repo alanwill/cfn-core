@@ -1002,6 +1002,8 @@
     "InternalSubnets" : {
       "Description" : "Internal Subnets",
       "Value" : { "Fn::Join":["", [
+      {"Ref" : "PresentationSubnetAZ1" }, " (in ", {"Fn::GetAtt" : [ "PresentationSubnetAZ1", "AvailabilityZone" ] }, "), ",
+      {"Ref" : "PresentationSubnetAZ2" }, " (in ", {"Fn::GetAtt" : [ "PresentationSubnetAZ2", "AvailabilityZone" ] }, "), ",
       {"Ref" : "ApplicationSubnetAZ1" }, " (in ", {"Fn::GetAtt" : [ "ApplicationSubnetAZ1", "AvailabilityZone" ] }, "), ",
       {"Ref" : "ApplicationSubnetAZ2" }, " (in ", {"Fn::GetAtt" : [ "ApplicationSubnetAZ2", "AvailabilityZone" ] }, "), ",
       {"Ref" : "InternalLoadBalancerSubnetAZ1" }, " (in ", {"Fn::GetAtt" : [ "InternalLoadBalancerSubnetAZ1", "AvailabilityZone" ] }, "), ",
