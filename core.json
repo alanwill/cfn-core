@@ -213,6 +213,10 @@
       "Properties" : {
         "Tags" : [
           {
+            "Key" : "Name",
+            "Value" : { "Fn::Join" : [ "-", [ { "Ref" : "AppName" }, { "Ref" : "EnvironmentName" }] ] }
+          },
+          {
             "Key" : "app",
             "Value" : { "Ref" : "AppName" }
           },
@@ -241,6 +245,10 @@
       "Properties" : {
         "Type" : "ipsec.1",
         "Tags" : [
+          {
+            "Key" : "Name",
+            "Value" : { "Fn::Join" : [ "-", [ { "Ref" : "AppName" }, { "Ref" : "EnvironmentName" }] ] }
+          },
           {
             "Key" : "app",
             "Value" : { "Ref" : "AppName" }
@@ -539,6 +547,10 @@
         "VpcId" : {"Ref" : "VPC"},
         "Tags" : [
           {
+            "Key" : "Name",
+            "Value" : { "Fn::Join" : [ "-", [ { "Ref" : "AppName" }, { "Ref" : "EnvironmentName" },"internet"] ] }
+          },
+          {
             "Key" : "purpose",
             "Value" : "internet"
           },
@@ -568,6 +580,10 @@
       "Properties" : {
         "VpcId" : {"Ref" : "VPC"},
         "Tags" : [
+          {
+            "Key" : "Name",
+            "Value" : { "Fn::Join" : [ "-", [ { "Ref" : "AppName" }, { "Ref" : "EnvironmentName" },"internal"] ] }
+          },
           {
             "Key" : "purpose",
             "Value" : "internal"
@@ -694,6 +710,10 @@
         "VpcId" : {"Ref" : "VPC"},
         "Tags" : [
           {
+            "Key" : "Name",
+            "Value" : { "Fn::Join" : [ "-", [ { "Ref" : "AppName" }, { "Ref" : "EnvironmentName" },"internet"] ] }
+          },
+          {
             "Key" : "layer",
             "Value" : "network"
           },
@@ -714,6 +734,10 @@
       "Properties" : {
         "VpcId" : {"Ref" : "VPC"},
         "Tags" : [
+          {
+            "Key" : "Name",
+            "Value" : { "Fn::Join" : [ "-", [ { "Ref" : "AppName" }, { "Ref" : "EnvironmentName" },"internal"] ] }
+          },
           {
             "Key" : "layer",
             "Value" : "network"
@@ -940,6 +964,10 @@
         ],
         "Tags" : [
           {
+            "Key" : "Name",
+            "Value" : "NAT"
+          },
+          {
             "Key" : "purpose",
             "Value" : "NAT"
           },
@@ -966,6 +994,10 @@
           { "IpProtocol" : "icmp", "FromPort" : "-1", "ToPort" : "-1", "CidrIp" : { "Ref" : "CorporateCidrIp" } }
         ],
         "Tags" : [
+          {
+            "Key" : "Name",
+            "Value" : "Management"
+          },
           {
             "Key" : "purpose",
             "Value" : "Management"
