@@ -142,7 +142,8 @@
       "Type": "String",
       "MinLength": "3",
       "MaxLength": "25",
-      "ConstraintDescription": "must be a valid IP CIDR range of the form x.x.x.x/x."
+      "AllowedPattern" : "[a-z]*",
+      "ConstraintDescription": "must be all lower case with no spaces"
     },
 
     "EnvironmentName" : {
@@ -150,7 +151,8 @@
       "Type": "String",
       "MinLength": "3",
       "MaxLength": "3",
-      "ConstraintDescription": "must me be 3 characters."
+      "AllowedPattern" : "[a-z]*",
+      "ConstraintDescription": "must me be 3 characters and all lower case."
     }
 
   },
