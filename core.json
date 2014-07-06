@@ -936,7 +936,11 @@
           "    --region ", { "Ref" : "AWS::Region" }, " || error_exit 'Failed to run cfn-init'\n",
 
           "# Update latest security patches\n",
-          "yum update -y\n"
+          "yum update -y\n",
+
+          "# Install yum-cron-security\n",
+          "yum install yum-cron-security -y\n"
+
           ]]}
         },
         "SourceDestCheck" : "false",
