@@ -874,6 +874,22 @@
       }
     },
 
+    "InternalSubnetAclAssociation7" : {
+      "Type" : "AWS::EC2::SubnetNetworkAclAssociation",
+      "Properties" : {
+        "SubnetId" : { "Ref" : "PresentationSubnetAZ1" },
+        "NetworkAclId" : {"Ref" : "InternalSubnetAcl"}
+      }
+    },
+
+    "InternalSubnetAclAssociation8" : {
+      "Type" : "AWS::EC2::SubnetNetworkAclAssociation",
+      "Properties" : {
+        "SubnetId" : { "Ref" : "PresentationSubnetAZ2" },
+        "NetworkAclId" : {"Ref" : "InternalSubnetAcl"}
+      }
+    },
+
     "NAT" : {
       "Type" : "AWS::EC2::Instance",
       "DependsOn" : "InternetGateway",
