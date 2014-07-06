@@ -1,7 +1,7 @@
 {
   "AWSTemplateFormatVersion" : "2010-09-09",
 
-  "Description" : "Core network creation across 2 AZs. Subnets, route tables, NACLs, IGW, NAT and security groups are created. NOTE: Template will only run in us-west-1, us-west-2, us-east-1 and eu-west-1",
+  "Description" : "Core network creation across 2 AZs. Subnets, route tables, NACLs, IGW, NAT , VGW and security groups are created.",
 
   "Parameters" : {
 
@@ -169,14 +169,14 @@
       "c3.2xlarge"  : { "Arch" : "64" }
     },
     "AWSRegionArch2AMI" : {
-      "us-west-2"  : {"64" : "ami-a4254f94"},
-      "us-west-1"  : {"64" : "ami-90bb82d5"},
-      "us-east-1"  : {"64" : "ami-318d9158"},
-      "eu-west-1"  : {"64" : "ami-ad19e2da"},
-      "ap-southeast-1" : {"64" : "ami-b60d5ee4"},
-      "ap-northeast-1"  : {"64" : "ami-07562f06"},
-      "ap-southeast-2" : {"64" : "ami-174bd32d"},
-      "sa-east-1"  : {"64" : "ami-ff5cfee2"}
+      "us-west-2"  : {"64" : "ami-383a5008"},
+      "us-west-1"  : {"64" : "ami-5aba831f"},
+      "us-east-1"  : {"64" : "ami-978d91fe"},
+      "eu-west-1"  : {"64" : "ami-4b18e33c"},
+      "ap-southeast-1" : {"64" : "ami-860d5ed4"},
+      "ap-northeast-1"  : {"64" : "ami-bb562fba"},
+      "ap-southeast-2" : {"64" : "ami-cf4ad2f5"},
+      "sa-east-1"  : {"64" : "ami-635dff7e"}
     }
   },
 
