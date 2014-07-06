@@ -12,7 +12,7 @@
       "AllowedValues" : [ "t2.micro","t2.small","t2.medium" ]
     },
 
-    "KeyName": {
+    "NATKeyName": {
       "Description" : "Name of an existing EC2 KeyPair to enable SSH access to the instances",
       "Type": "String",
       "MinLength": "1",
@@ -902,7 +902,7 @@
         "SourceDestCheck" : "false",
         "DisableApiTermination" : "true",
         "Monitoring" : "false",
-        "KeyName" : { "Ref" : "KeyName" },
+        "KeyName" : { "Ref" : "NATKeyName" },
         "NetworkInterfaces" : [{
           "GroupSet"                 : [{ "Ref" : "NATSG" }],
           "AssociatePublicIpAddress" : "true",
