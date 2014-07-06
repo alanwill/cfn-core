@@ -543,6 +543,7 @@
 
     "InternetRouteTable" : {
       "Type" : "AWS::EC2::RouteTable",
+      "DependsOn" : "AttachIVirtualPrivateGateway",
       "Properties" : {
         "VpcId" : {"Ref" : "VPC"},
         "Tags" : [
@@ -568,7 +569,6 @@
 
     "VGWRoutePropInternetRouteTable" : {
       "Type" : "AWS::EC2::VPNGatewayRoutePropagation",
-      "DependsOn" : "InternetRouteTable",
       "Properties" : {
         "RouteTableIds" : [{"Ref" : "InternetRouteTable"}],
         "VpnGatewayId" : {"Ref" : "VirtualPrivateGateway"}
@@ -577,6 +577,7 @@
 
     "InternalRouteTable" : {
       "Type" : "AWS::EC2::RouteTable",
+      "DependsOn" : "AttachIVirtualPrivateGateway",
       "Properties" : {
         "VpcId" : {"Ref" : "VPC"},
         "Tags" : [
@@ -602,7 +603,6 @@
 
     "VGWRoutePropInternalRouteTable" : {
       "Type" : "AWS::EC2::VPNGatewayRoutePropagation",
-      "DependsOn" : "InternalRouteTable",
       "Properties" : {
         "RouteTableIds" : [{"Ref" : "InternalRouteTable"}],
         "VpnGatewayId" : {"Ref" : "VirtualPrivateGateway"}
