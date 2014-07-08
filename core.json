@@ -156,12 +156,17 @@
     },
 
     "EnvironmentName" : {
-      "Description" : "What is the environment type, e.g. prd/stg/dev/tst/uat/poc.",
+      "Description" : "What is the environment type, e.g. alpha/beta/prod/test.",
       "Type": "String",
-      "MinLength": "3",
-      "MaxLength": "3",
-      "AllowedPattern" : "[a-z]*",
-      "ConstraintDescription": "must me be 3 characters and all lower case."
+      "AllowedValues" : [ "alpha","beta","prod","test" ],
+      "ConstraintDescription": "must be either alpha, beta, prod or test."
+    },
+
+    "BastionInstanceType" : {
+      "Description" : "Instance type for Bastion",
+      "Type" : "String",
+      "Default" : "t2.micro",
+      "AllowedValues" : [ "t2.micro","t2.small","t2.medium" ]
     }
 
   },
