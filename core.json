@@ -13,7 +13,16 @@
     },
 
     "NATKeyName": {
-      "Description" : "Name of an existing EC2 KeyPair to enable SSH access to the instances",
+      "Description" : "Name of an existing EC2 KeyPair to enable SSH access to the NAT instance",
+      "Type": "String",
+      "MinLength": "1",
+      "MaxLength": "255",
+      "AllowedPattern" : "[\\x20-\\x7E]*",
+      "ConstraintDescription" : "can contain only ASCII characters."
+    },
+
+    "AppKeyName": {
+      "Description" : "Name of an existing EC2 KeyPair to enable SSH access to the application instances",
       "Type": "String",
       "MinLength": "1",
       "MaxLength": "255",
