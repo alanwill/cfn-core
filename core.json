@@ -639,7 +639,7 @@
       "Properties" : {
         "RouteTableId" : { "Ref" : "InternalRouteTable" },
         "DestinationCidrBlock" : "0.0.0.0/0",
-        "InstanceId" : { "Ref" : "NAT" }
+        "InstanceId" : { "Ref" : "NATInstance" }
       }
     },
 
@@ -906,7 +906,7 @@
       }
     },
 
-    "NAT" : {
+    "NATInstance" : {
       "Type" : "AWS::EC2::Instance",
       "DependsOn" : "InternetGateway",
       "Metadata" : {
@@ -948,7 +948,7 @@
           "function error_exit {\n",
           "  echo $1\n",
           "}\n",
-          "/opt/aws/bin/cfn-init -s ", { "Ref" : "AWS::StackId" }, " -r NAT ",
+          "/opt/aws/bin/cfn-init -s ", { "Ref" : "AWS::StackName" }, " -r NATInstance ",
           "    --region ", { "Ref" : "AWS::Region" }, " || error_exit 'Failed to run cfn-init'\n",
 
           "# Update latest security patches\n",
