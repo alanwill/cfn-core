@@ -13,6 +13,7 @@ Currently the template will provision a fully functional VPC that provides inter
 * Attaches a Virtual Private Gateway for private connectivity via VPN or Direct Connect and enables route table propogation
 * Creates and configures a route table for internal subnets and another for internet subnets
 * Tags all resources according to the values passed in via parameters
+* Creates a bastion instance to limit SSH access when connecting to application instances
 
 You have complete control of the CIDRs that govern each subnet so this template can be used to provision a network of virtually any size.
 
@@ -59,7 +60,7 @@ Once Cloudformation provides support for this, I'd like to be able to add:
 * IAM Identity Provider for SAML
 * IAM Roles with pre-specified names to work with SAML
 * IAM account alias creation
-* CloudTrail configured in all regions from a single template 
+* CloudTrail configured in all regions from a single template
 * Import a public EC2 keypair
 
 ##Help
