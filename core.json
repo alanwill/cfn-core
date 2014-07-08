@@ -1054,6 +1054,18 @@
 
     "BastionInstance" : {
       "Type" : "AWS::EC2::Instance",
+      "Metadata" : {
+        "Comment1" : "Install the latest software patches and security updates",
+        "AWS::CloudFormation::Init" : {
+          "config" : {
+            "commands" : {
+              "a1" : {
+                "command" : "/usr/bin/yum update -y"
+              }
+            }
+          }
+        }
+      },
       "Properties" : {
         "InstanceType" : { "Ref" : "BastionInstanceType" },
         "DisableApiTermination" : "true",
@@ -1075,6 +1087,24 @@
               ]
             }
           ]
+        },
+        "UserData"       : { "Fn::Base64" : { "Fn::Join" : ["", [
+          "#!/bin/bash -v\n",
+          "yum update -y aws-cfn-bootstrap\n",
+
+          "# Helper function\n",
+          "function error_exit {\n",
+          "  echo $1\n",
+          "}\n",
+          "/opt/aws/bin/cfn-init -s ", { "Ref" : "AWS::StackName" }, " -r BastionInstance ",
+          "    --region ", { "Ref" : "AWS::Region" }, " || error_exit 'Failed to run cfn-init'\n",
+
+          "# Update latest security patches\n",
+          "yum update -y\n",
+
+          "# Install yum-cron-security\n",
+          "yum install yum-cron-security -y\n"
+          ]]}
         },
         "SecurityGroupIds" : [{ "Ref" : "ManagementSG" }],
         "IamInstanceProfile": { "Ref": "BastionInstanceProfile" },
