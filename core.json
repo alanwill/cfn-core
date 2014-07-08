@@ -147,7 +147,7 @@
     },
 
     "AppName" : {
-      "Description" : "What is the name of the application? This is used to tag the resources",
+      "Description" : "What is the name of the application? This is used to tag resources",
       "Type": "String",
       "MinLength": "3",
       "MaxLength": "25",
