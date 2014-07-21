@@ -6,10 +6,10 @@
   "Parameters" : {
 
     "NATInstanceType" : {
-      "Description" : "NAT EC2 instance type, only t2.micro, t2.small, t2.medium and m3.medium",
+      "Description" : "NAT EC2 instance type, only t1.micro, t2.micro, t2.small, t2.medium and m3.medium",
       "Type" : "String",
-      "Default" : "t2.micro",
-      "AllowedValues" : [ "t2.micro","t2.small","t2.medium","m3.medium" ]
+      "Default" : "t1.micro",
+      "AllowedValues" : [ "t1.micro","t2.micro","t2.small","t2.medium","m3.medium" ]
     },
 
     "NATKeyName": {
@@ -173,26 +173,37 @@
 
   "Mappings" : {
     "AWSInstanceType2Arch" : {
-      "t2.micro"   : { "Arch" : "64" },
-      "t2.small"   : { "Arch" : "64" },
-      "t2.medium"  : { "Arch" : "64" },
-      "m3.medium" : { "Arch" : "64" },
-      "m3.large"   : { "Arch" : "64" },
-      "m3.xlarge"  : { "Arch" : "64" },
-      "m3.2xlarge"  : { "Arch" : "64" },
-      "c3.large"  : { "Arch" : "64" },
-      "c3.xlarge"  : { "Arch" : "64" },
-      "c3.2xlarge"  : { "Arch" : "64" }
+      "t1.micro"   : { "Arch" : "PV64" },
+      "t2.micro"   : { "Arch" : "HVM64" },
+      "t2.small"   : { "Arch" : "HVM64" },
+      "t2.medium"  : { "Arch" : "HVM64" },
+      "m3.medium" : { "Arch" : "HVM64" },
+      "m3.large"   : { "Arch" : "HVM64" },
+      "m3.xlarge"  : { "Arch" : "HVM64" },
+      "m3.2xlarge"  : { "Arch" : "HVM64" },
+      "c3.large"  : { "Arch" : "HVM64" },
+      "c3.xlarge"  : { "Arch" : "HVM64" },
+      "c3.2xlarge"  : { "Arch" : "HVM64" }
     },
     "AWSRegionArch2AMI" : {
-      "us-west-2"  : {"64" : "ami-383a5008"},
-      "us-west-1"  : {"64" : "ami-5aba831f"},
-      "us-east-1"  : {"64" : "ami-978d91fe"},
-      "eu-west-1"  : {"64" : "ami-4b18e33c"},
-      "ap-southeast-1" : {"64" : "ami-860d5ed4"},
-      "ap-northeast-1"  : {"64" : "ami-bb562fba"},
-      "ap-southeast-2" : {"64" : "ami-cf4ad2f5"},
-      "sa-east-1"  : {"64" : "ami-635dff7e"}
+      "us-west-2"  : {"HVM64" : "ami-383a5008"},
+      "us-west-1"  : {"HVM64" : "ami-5aba831f"},
+      "us-east-1"  : {"HVM64" : "ami-978d91fe"},
+      "eu-west-1"  : {"HVM64" : "ami-4b18e33c"},
+      "ap-southeast-1" : {"HVM64" : "ami-860d5ed4"},
+      "ap-northeast-1"  : {"HVM64" : "ami-bb562fba"},
+      "ap-southeast-2" : {"HVM64" : "ami-cf4ad2f5"},
+      "sa-east-1"  : {"HVM64" : "ami-635dff7e"}
+    },
+    "NATRegionArch2AMI" : {
+      "us-west-2"      : {"PV64" : "ami-f032acc0"},
+      "us-west-1"      : {"PV64" : "ami-d69aad93"},
+      "us-east-1"      : {"PV64" : "ami-ad227cc4"},
+      "eu-west-1"      : {"PV64" : "ami-f3e30084"},
+      "ap-southeast-1"      : {"PV64" : "ami-f22772a0"},
+      "ap-northeast-1"      : {"PV64" : "ami-cd43d9cc"},
+      "ap-southeast-2"      : {"PV64" : "ami-3bae3201"},
+      "sa-east-1"      : {"PV64" : "ami-d78325ca"}
     }
   },
 
@@ -925,7 +936,7 @@
         "InstanceType" : { "Ref" : "NATInstanceType" },
         "ImageId" : {
           "Fn::FindInMap" : [
-            "AWSRegionArch2AMI",
+            "NATRegionArch2AMI",
             {
               "Ref" : "AWS::Region"
             },
@@ -1001,7 +1012,7 @@
         "Path": "/"
       }
     },
-    "SplunkBastionPolicy1": {
+    "BastionPolicy1": {
       "Type": "AWS::IAM::Policy",
       "Properties": {
         "PolicyName": "EC2-ReadOnly",
@@ -1081,7 +1092,7 @@
               "Fn::FindInMap" : [
                 "AWSInstanceType2Arch",
                 {
-                  "Ref" : "NATInstanceType"
+                  "Ref" : "BastionInstanceType"
                 },
                 "Arch"
               ]
