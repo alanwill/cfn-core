@@ -1,0 +1,1490 @@
+{
+  "AWSTemplateFormatVersion" : "2010-09-09",
+
+  "Description" : "Core network creation across 3 AZs. Subnets, route tables, NACLs, IGW, NAT , VGW and security groups are created.",
+
+  "Parameters" : {
+
+    "NATInstanceType" : {
+      "Description" : "NAT EC2 instance type, only t1.micro, t2.micro, t2.small, t2.medium and m3.medium",
+      "Type" : "String",
+      "Default" : "t1.micro",
+      "AllowedValues" : [ "t1.micro","t2.micro","t2.small","t2.medium","m3.medium" ]
+    },
+
+    "NATKeyName": {
+      "Description" : "Name of an existing EC2 KeyPair to enable SSH access to the NAT instance",
+      "Type": "String",
+      "MinLength": "1",
+      "MaxLength": "255",
+      "AllowedPattern" : "[\\x20-\\x7E]*",
+      "ConstraintDescription" : "can contain only ASCII characters."
+    },
+
+    "AppKeyName": {
+      "Description" : "Name of an existing EC2 KeyPair to enable SSH access to the application instances",
+      "Type": "String",
+      "MinLength": "1",
+      "MaxLength": "255",
+      "AllowedPattern" : "[\\x20-\\x7E]*",
+      "ConstraintDescription" : "can contain only ASCII characters."
+    },
+
+    "CorporateCidrIp" : {
+      "Description" : "Corporate CidrIp (to restrict traffic to only the corporate IP space)",
+      "Type" : "String",
+      "Default" :  "10.0.0.0/8"
+    },
+
+    "VPCCidr" : {
+      "Description" : "CIDR block for entire VPC (e.g. 10.1.2.3/22)",
+      "Type": "String",
+      "MinLength": "9",
+      "MaxLength": "18",
+      "Default": "0.0.0.0/0",
+      "AllowedPattern": "(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})/(\\d{1,2})",
+      "ConstraintDescription": "must be a valid IP CIDR range of the form x.x.x.x/x."
+    },
+
+    "PresentationSubnetCidrAZ1" : {
+      "Description" : "CIDR block for subnet containing the Presentation Servers (e.g. 10.1.2.3/25)",
+      "Type": "String",
+      "MinLength": "9",
+      "MaxLength": "18",
+      "Default": "0.0.0.0/0",
+      "AllowedPattern": "(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})/(\\d{1,2})",
+      "ConstraintDescription": "must be a valid IP CIDR range of the form x.x.x.x/x."
+    },
+
+    "PresentationSubnetCidrAZ2" : {
+      "Description" : "CIDR block for subnet containing the Presentation Servers (e.g. 10.1.2.3/25)",
+      "Type": "String",
+      "MinLength": "9",
+      "MaxLength": "18",
+      "Default": "0.0.0.0/0",
+      "AllowedPattern": "(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})/(\\d{1,2})",
+      "ConstraintDescription": "must be a valid IP CIDR range of the form x.x.x.x/x."
+    },
+
+    "PresentationSubnetCidrAZ3" : {
+      "Description" : "CIDR block for subnet containing the Presentation Servers (e.g. 10.1.2.3/25)",
+      "Type": "String",
+      "MinLength": "9",
+      "MaxLength": "18",
+      "Default": "0.0.0.0/0",
+      "AllowedPattern": "(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})/(\\d{1,2})",
+      "ConstraintDescription": "must be a valid IP CIDR range of the form x.x.x.x/x."
+    },
+
+    "ApplicationSubnetCidrAZ1" : {
+      "Description" : "CIDR block for subnet containing the Application Servers (e.g. 10.1.2.3/25)",
+      "Type": "String",
+      "MinLength": "9",
+      "MaxLength": "18",
+      "Default": "0.0.0.0/0",
+      "AllowedPattern": "(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})/(\\d{1,2})",
+      "ConstraintDescription": "must be a valid IP CIDR range of the form x.x.x.x/x."
+    },
+
+    "ApplicationSubnetCidrAZ2" : {
+      "Description" : "CIDR block for subnet containing the Application Servers (e.g. 10.1.2.3/25)",
+      "Type": "String",
+      "MinLength": "9",
+      "MaxLength": "18",
+      "Default": "0.0.0.0/0",
+      "AllowedPattern": "(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})/(\\d{1,2})",
+      "ConstraintDescription": "must be a valid IP CIDR range of the form x.x.x.x/x."
+    },
+
+    "ApplicationSubnetCidrAZ3" : {
+      "Description" : "CIDR block for subnet containing the Application Servers (e.g. 10.1.2.3/25)",
+      "Type": "String",
+      "MinLength": "9",
+      "MaxLength": "18",
+      "Default": "0.0.0.0/0",
+      "AllowedPattern": "(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})/(\\d{1,2})",
+      "ConstraintDescription": "must be a valid IP CIDR range of the form x.x.x.x/x."
+    },
+
+    "DatabaseSubnetCidrAZ1" : {
+      "Description" : "CIDR block for subnet containing any databases (e.g. 10.1.2.3/25)",
+      "Type": "String",
+      "MinLength": "9",
+      "MaxLength": "18",
+      "Default": "0.0.0.0/0",
+      "AllowedPattern": "(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})/(\\d{1,2})",
+      "ConstraintDescription": "must be a valid IP CIDR range of the form x.x.x.x/x."
+    },
+
+    "DatabaseSubnetCidrAZ2" : {
+      "Description" : "CIDR block for subnet containing any databases (e.g. 10.1.2.3/25)",
+      "Type": "String",
+      "MinLength": "9",
+      "MaxLength": "18",
+      "Default": "0.0.0.0/0",
+      "AllowedPattern": "(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})/(\\d{1,2})",
+      "ConstraintDescription": "must be a valid IP CIDR range of the form x.x.x.x/x."
+    },
+
+    "DatabaseSubnetCidrAZ3" : {
+      "Description" : "CIDR block for subnet containing any databases (e.g. 10.1.2.3/25)",
+      "Type": "String",
+      "MinLength": "9",
+      "MaxLength": "18",
+      "Default": "0.0.0.0/0",
+      "AllowedPattern": "(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})/(\\d{1,2})",
+      "ConstraintDescription": "must be a valid IP CIDR range of the form x.x.x.x/x."
+    },
+
+    "InternetLoadBalancerSubnetCidrAZ1" : {
+      "Description" : "CIDR block for subnet containing the internet facing load balancers (e.g. 10.1.2.3/26)",
+      "Type": "String",
+      "MinLength": "9",
+      "MaxLength": "18",
+      "Default": "0.0.0.0/0",
+      "AllowedPattern": "(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})/(\\d{1,2})",
+      "ConstraintDescription": "must be a valid IP CIDR range of the form x.x.x.x/x."
+    },
+
+    "InternetLoadBalancerSubnetCidrAZ2" : {
+      "Description" : "CIDR block for subnet containing the internet facing load balancers (e.g. 10.1.2.3/26)",
+      "Type": "String",
+      "MinLength": "9",
+      "MaxLength": "18",
+      "Default": "0.0.0.0/0",
+      "AllowedPattern": "(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})/(\\d{1,2})",
+      "ConstraintDescription": "must be a valid IP CIDR range of the form x.x.x.x/x."
+    },
+
+    "InternetLoadBalancerSubnetCidrAZ3" : {
+      "Description" : "CIDR block for subnet containing the internet facing load balancers (e.g. 10.1.2.3/26)",
+      "Type": "String",
+      "MinLength": "9",
+      "MaxLength": "18",
+      "Default": "0.0.0.0/0",
+      "AllowedPattern": "(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})/(\\d{1,2})",
+      "ConstraintDescription": "must be a valid IP CIDR range of the form x.x.x.x/x."
+    },
+
+    "InternalLoadBalancerSubnetCidrAZ1" : {
+      "Description" : "CIDR block for subnet containing the internal facing load balancers (e.g. 10.1.2.3/26)",
+      "Type": "String",
+      "MinLength": "9",
+      "MaxLength": "18",
+      "Default": "0.0.0.0/0",
+      "AllowedPattern": "(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})/(\\d{1,2})",
+      "ConstraintDescription": "must be a valid IP CIDR range of the form x.x.x.x/x."
+    },
+
+    "InternalLoadBalancerSubnetCidrAZ2" : {
+      "Description" : "CIDR block for subnet containing the internal facing load balancers (e.g. 10.1.2.3/26)",
+      "Type": "String",
+      "MinLength": "9",
+      "MaxLength": "18",
+      "Default": "0.0.0.0/0",
+      "AllowedPattern": "(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})/(\\d{1,2})",
+      "ConstraintDescription": "must be a valid IP CIDR range of the form x.x.x.x/x."
+    },
+
+    "InternalLoadBalancerSubnetCidrAZ3" : {
+      "Description" : "CIDR block for subnet containing the internal facing load balancers (e.g. 10.1.2.3/26)",
+      "Type": "String",
+      "MinLength": "9",
+      "MaxLength": "18",
+      "Default": "0.0.0.0/0",
+      "AllowedPattern": "(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})/(\\d{1,2})",
+      "ConstraintDescription": "must be a valid IP CIDR range of the form x.x.x.x/x."
+    },
+
+    "AppName" : {
+      "Description" : "What is the name of the application? This is used to tag resources",
+      "Type": "String",
+      "MinLength": "3",
+      "MaxLength": "25",
+      "AllowedPattern" : "[a-z]*",
+      "ConstraintDescription": "must be all lower case with no spaces"
+    },
+
+    "EnvironmentName" : {
+      "Description" : "What is the environment type, e.g. alpha/beta/prod/test.",
+      "Type": "String",
+      "AllowedValues" : [ "alpha","beta","prod","test" ],
+      "ConstraintDescription": "must be either alpha, beta, prod or test."
+    },
+
+    "BastionInstanceType" : {
+      "Description" : "Instance type for Bastion",
+      "Type" : "String",
+      "Default" : "t2.micro",
+      "AllowedValues" : [ "t2.micro","t2.small","t2.medium","m3.medium" ]
+    }
+
+  },
+
+  "Mappings" : {
+    "AWSInstanceType2Arch" : {
+      "t1.micro"   : { "Arch" : "PV64" },
+      "t2.micro"   : { "Arch" : "HVM64" },
+      "t2.small"   : { "Arch" : "HVM64" },
+      "t2.medium"  : { "Arch" : "HVM64" },
+      "m3.medium" : { "Arch" : "HVM64" },
+      "m3.large"   : { "Arch" : "HVM64" },
+      "m3.xlarge"  : { "Arch" : "HVM64" },
+      "m3.2xlarge"  : { "Arch" : "HVM64" },
+      "c3.large"  : { "Arch" : "HVM64" },
+      "c3.xlarge"  : { "Arch" : "HVM64" },
+      "c3.2xlarge"  : { "Arch" : "HVM64" }
+    },
+    "AWSRegionArch2AMI" : {
+      "us-west-2"  : {"HVM64" : "ami-383a5008"},
+      "us-west-1"  : {"HVM64" : "ami-5aba831f"},
+      "us-east-1"  : {"HVM64" : "ami-978d91fe"},
+      "eu-west-1"  : {"HVM64" : "ami-4b18e33c"},
+      "ap-southeast-1" : {"HVM64" : "ami-860d5ed4"},
+      "ap-northeast-1"  : {"HVM64" : "ami-bb562fba"},
+      "ap-southeast-2" : {"HVM64" : "ami-cf4ad2f5"},
+      "sa-east-1"  : {"HVM64" : "ami-635dff7e"}
+    },
+    "NATRegionArch2AMI" : {
+      "us-west-2"      : {"PV64" : "ami-f032acc0"},
+      "us-west-1"      : {"PV64" : "ami-d69aad93"},
+      "us-east-1"      : {"PV64" : "ami-ad227cc4"},
+      "eu-west-1"      : {"PV64" : "ami-f3e30084"},
+      "ap-southeast-1"      : {"PV64" : "ami-f22772a0"},
+      "ap-northeast-1"      : {"PV64" : "ami-cd43d9cc"},
+      "ap-southeast-2"      : {"PV64" : "ami-3bae3201"},
+      "sa-east-1"      : {"PV64" : "ami-d78325ca"}
+    }
+  },
+
+  "Resources" : {
+     "VPC" : {
+      "Type" : "AWS::EC2::VPC",
+      "Properties" : {
+        "CidrBlock" : { "Ref" : "VPCCidr" },
+        "EnableDnsSupport" : "true",
+        "EnableDnsHostnames" : "true",
+        "Tags" : [
+          {
+            "Key" : "Name",
+            "Value" : { "Fn::Join" : [ "-", [ { "Ref" : "AppName" }, { "Ref" : "EnvironmentName" }] ] }
+          },
+          {
+            "Key" : "app",
+            "Value" : { "Ref" : "AppName" }
+          },
+          {
+            "Key" : "stack",
+            "Value" : { "Ref" : "EnvironmentName" }
+          },
+          {
+            "Key" : "layer",
+            "Value" : "network"
+          }
+        ]
+      }
+    },
+
+    "InternetGateway" : {
+      "Type" : "AWS::EC2::InternetGateway",
+      "Properties" : {
+        "Tags" : [
+          {
+            "Key" : "Name",
+            "Value" : { "Fn::Join" : [ "-", [ { "Ref" : "AppName" }, { "Ref" : "EnvironmentName" }] ] }
+          },
+          {
+            "Key" : "app",
+            "Value" : { "Ref" : "AppName" }
+          },
+          {
+            "Key" : "stack",
+            "Value" : { "Ref" : "EnvironmentName" }
+          },
+          {
+            "Key" : "layer",
+            "Value" : "network"
+          }
+        ]
+      }
+    },
+
+    "AttachInternetGateway" : {
+       "Type" : "AWS::EC2::VPCGatewayAttachment",
+       "Properties" : {
+         "VpcId" : { "Ref" : "VPC" },
+         "InternetGatewayId" : { "Ref" : "InternetGateway" }
+       }
+    },
+
+    "VirtualPrivateGateway" : {
+      "Type" : "AWS::EC2::VPNGateway",
+      "Properties" : {
+        "Type" : "ipsec.1",
+        "Tags" : [
+          {
+            "Key" : "Name",
+            "Value" : { "Fn::Join" : [ "-", [ { "Ref" : "AppName" }, { "Ref" : "EnvironmentName" }] ] }
+          },
+          {
+            "Key" : "app",
+            "Value" : { "Ref" : "AppName" }
+          },
+          {
+            "Key" : "stack",
+            "Value" : { "Ref" : "EnvironmentName" }
+          },
+          {
+            "Key" : "layer",
+            "Value" : "network"
+          }
+        ]
+      }
+   },
+
+   "AttachIVirtualPrivateGateway" : {
+       "Type" : "AWS::EC2::VPCGatewayAttachment",
+       "Properties" : {
+         "VpcId" : { "Ref" : "VPC" },
+         "VpnGatewayId" : { "Ref" : "VirtualPrivateGateway" }
+       }
+    },
+
+    "PresentationSubnetAZ1" : {
+      "Type" : "AWS::EC2::Subnet",
+      "Properties" : {
+        "VpcId" : { "Ref" : "VPC" },
+        "CidrBlock" : { "Ref" : "PresentationSubnetCidrAZ1" },
+        "AvailabilityZone" : { "Fn::Select" : [ "0", { "Fn::GetAZs" : "" } ] },
+        "Tags" : [
+          {
+            "Key" : "purpose",
+            "Value" : "presentation"
+          },
+          {
+            "Key" : "stack",
+            "Value" : { "Ref" : "EnvironmentName" }
+          },
+          {
+            "Key" : "network",
+            "Value" : "internal"
+          },
+          {
+            "Key" : "Name",
+            "Value" : "presentation"
+          }
+        ]
+      }
+    },
+    "PresentationSubnetAZ2" : {
+      "Type" : "AWS::EC2::Subnet",
+      "Properties" : {
+        "VpcId" : { "Ref" : "VPC" },
+        "CidrBlock" : { "Ref" : "PresentationSubnetCidrAZ2" },
+        "AvailabilityZone" : { "Fn::Select" : [ "1", { "Fn::GetAZs" : "" } ] },
+        "Tags" : [
+          {
+            "Key" : "purpose",
+            "Value" : "presentation"
+          },
+          {
+            "Key" : "stack",
+            "Value" : { "Ref" : "EnvironmentName" }
+          },
+          {
+            "Key" : "network",
+            "Value" : "internal"
+          },
+          {
+            "Key" : "Name",
+            "Value" : "presentation"
+          }
+        ]
+      }
+    },
+    "PresentationSubnetAZ3" : {
+      "Type" : "AWS::EC2::Subnet",
+      "Properties" : {
+        "VpcId" : { "Ref" : "VPC" },
+        "CidrBlock" : { "Ref" : "PresentationSubnetCidrAZ3" },
+        "AvailabilityZone" : { "Fn::Select" : [ "2", { "Fn::GetAZs" : "" } ] },
+        "Tags" : [
+          {
+            "Key" : "purpose",
+            "Value" : "presentation"
+          },
+          {
+            "Key" : "stack",
+            "Value" : { "Ref" : "EnvironmentName" }
+          },
+          {
+            "Key" : "network",
+            "Value" : "internal"
+          },
+          {
+            "Key" : "Name",
+            "Value" : "presentation"
+          }
+        ]
+      }
+    },
+
+    "ApplicationSubnetAZ1" : {
+      "Type" : "AWS::EC2::Subnet",
+      "Properties" : {
+        "VpcId" : { "Ref" : "VPC" },
+        "CidrBlock" : { "Ref" : "ApplicationSubnetCidrAZ1" },
+        "AvailabilityZone" : { "Fn::Select" : [ "0", { "Fn::GetAZs" : "" } ] },
+        "Tags" : [
+          {
+            "Key" : "purpose",
+            "Value" : "application"
+          },
+          {
+            "Key" : "stack",
+            "Value" : { "Ref" : "EnvironmentName" }
+          },
+          {
+            "Key" : "network",
+            "Value" : "internal"
+          },
+          {
+            "Key" : "Name",
+            "Value" : "application"
+          }
+        ]
+      }
+    },
+    "ApplicationSubnetAZ2" : {
+      "Type" : "AWS::EC2::Subnet",
+      "Properties" : {
+        "VpcId" : { "Ref" : "VPC" },
+        "CidrBlock" : { "Ref" : "ApplicationSubnetCidrAZ2" },
+        "AvailabilityZone" : { "Fn::Select" : [ "1", { "Fn::GetAZs" : "" } ] },
+        "Tags" : [
+          {
+            "Key" : "purpose",
+            "Value" : "application"
+          },
+          {
+            "Key" : "stack",
+            "Value" : { "Ref" : "EnvironmentName" }
+          },
+          {
+            "Key" : "network",
+            "Value" : "internal"
+          },
+          {
+            "Key" : "Name",
+            "Value" : "application"
+          }
+        ]
+      }
+    },
+    "ApplicationSubnetAZ3" : {
+      "Type" : "AWS::EC2::Subnet",
+      "Properties" : {
+        "VpcId" : { "Ref" : "VPC" },
+        "CidrBlock" : { "Ref" : "ApplicationSubnetCidrAZ3" },
+        "AvailabilityZone" : { "Fn::Select" : [ "2", { "Fn::GetAZs" : "" } ] },
+        "Tags" : [
+          {
+            "Key" : "purpose",
+            "Value" : "application"
+          },
+          {
+            "Key" : "stack",
+            "Value" : { "Ref" : "EnvironmentName" }
+          },
+          {
+            "Key" : "network",
+            "Value" : "internal"
+          },
+          {
+            "Key" : "Name",
+            "Value" : "application"
+          }
+        ]
+      }
+    },
+
+    "DatabaseSubnetAZ1" : {
+      "Type" : "AWS::EC2::Subnet",
+      "Properties" : {
+        "VpcId" : { "Ref" : "VPC" },
+        "CidrBlock" : { "Ref" : "DatabaseSubnetCidrAZ1" },
+        "AvailabilityZone" : { "Fn::Select" : [ "0", { "Fn::GetAZs" : "" } ] },
+        "Tags" : [
+          {
+            "Key" : "purpose",
+            "Value" : "database"
+          },
+          {
+            "Key" : "stack",
+            "Value" : { "Ref" : "EnvironmentName" }
+          },
+          {
+            "Key" : "network",
+            "Value" : "internal"
+          },
+          {
+            "Key" : "Name",
+            "Value" : "database"
+          }
+        ]
+      }
+    },
+    "DatabaseSubnetAZ2" : {
+      "Type" : "AWS::EC2::Subnet",
+      "Properties" : {
+        "VpcId" : { "Ref" : "VPC" },
+        "CidrBlock" : { "Ref" : "DatabaseSubnetCidrAZ2" },
+        "AvailabilityZone" : { "Fn::Select" : [ "1", { "Fn::GetAZs" : "" } ] },
+        "Tags" : [
+          {
+            "Key" : "purpose",
+            "Value" : "database"
+          },
+          {
+            "Key" : "stack",
+            "Value" : { "Ref" : "EnvironmentName" }
+          },
+          {
+            "Key" : "network",
+            "Value" : "internal"
+          },
+          {
+            "Key" : "Name",
+            "Value" : "database"
+          }
+        ]
+      }
+    },
+    "DatabaseSubnetAZ3" : {
+      "Type" : "AWS::EC2::Subnet",
+      "Properties" : {
+        "VpcId" : { "Ref" : "VPC" },
+        "CidrBlock" : { "Ref" : "DatabaseSubnetCidrAZ3" },
+        "AvailabilityZone" : { "Fn::Select" : [ "2", { "Fn::GetAZs" : "" } ] },
+        "Tags" : [
+          {
+            "Key" : "purpose",
+            "Value" : "database"
+          },
+          {
+            "Key" : "stack",
+            "Value" : { "Ref" : "EnvironmentName" }
+          },
+          {
+            "Key" : "network",
+            "Value" : "internal"
+          },
+          {
+            "Key" : "Name",
+            "Value" : "database"
+          }
+        ]
+      }
+    },
+
+    "InternetLoadBalancerSubnetAZ1" : {
+      "Type" : "AWS::EC2::Subnet",
+      "Properties" : {
+        "VpcId" : { "Ref" : "VPC" },
+        "CidrBlock" : { "Ref" : "InternetLoadBalancerSubnetCidrAZ1" },
+        "AvailabilityZone" : { "Fn::Select" : [ "0", { "Fn::GetAZs" : "" } ] },
+        "Tags" : [
+          {
+            "Key" : "purpose",
+            "Value" : "internet load balancers"
+          },
+          {
+            "Key" : "stack",
+            "Value" : { "Ref" : "EnvironmentName" }
+          },
+          {
+            "Key" : "network",
+            "Value" : "internet"
+          },
+          {
+            "Key" : "Name",
+            "Value" : "internet load balancers"
+          }
+        ]
+      }
+    },
+    "InternetLoadBalancerSubnetAZ2" : {
+      "Type" : "AWS::EC2::Subnet",
+      "Properties" : {
+        "VpcId" : { "Ref" : "VPC" },
+        "CidrBlock" : { "Ref" : "InternetLoadBalancerSubnetCidrAZ2" },
+        "AvailabilityZone" : { "Fn::Select" : [ "1", { "Fn::GetAZs" : "" } ] },
+        "Tags" : [
+          {
+            "Key" : "purpose",
+            "Value" : "internet load balancers"
+          },
+          {
+            "Key" : "stack",
+            "Value" : { "Ref" : "EnvironmentName" }
+          },
+          {
+            "Key" : "network",
+            "Value" : "internet"
+          },
+          {
+            "Key" : "Name",
+            "Value" : "internet load balancers"
+          }
+        ]
+      }
+    },
+    "InternetLoadBalancerSubnetAZ3" : {
+      "Type" : "AWS::EC2::Subnet",
+      "Properties" : {
+        "VpcId" : { "Ref" : "VPC" },
+        "CidrBlock" : { "Ref" : "InternetLoadBalancerSubnetCidrAZ3" },
+        "AvailabilityZone" : { "Fn::Select" : [ "2", { "Fn::GetAZs" : "" } ] },
+        "Tags" : [
+          {
+            "Key" : "purpose",
+            "Value" : "internet load balancers"
+          },
+          {
+            "Key" : "stack",
+            "Value" : { "Ref" : "EnvironmentName" }
+          },
+          {
+            "Key" : "network",
+            "Value" : "internet"
+          },
+          {
+            "Key" : "Name",
+            "Value" : "internet load balancers"
+          }
+        ]
+      }
+    },
+
+    "InternalLoadBalancerSubnetAZ1" : {
+      "Type" : "AWS::EC2::Subnet",
+      "Properties" : {
+        "VpcId" : { "Ref" : "VPC" },
+        "CidrBlock" : { "Ref" : "InternalLoadBalancerSubnetCidrAZ1" },
+        "AvailabilityZone" : { "Fn::Select" : [ "0", { "Fn::GetAZs" : "" } ] },
+        "Tags" : [
+          {
+            "Key" : "purpose",
+            "Value" : "internal load balancers"
+          },
+          {
+            "Key" : "stack",
+            "Value" : { "Ref" : "EnvironmentName" }
+          },
+          {
+            "Key" : "network",
+            "Value" : "internal"
+          },
+          {
+            "Key" : "Name",
+            "Value" : "internal load balancers"
+          }
+        ]
+      }
+    },
+    "InternalLoadBalancerSubnetAZ2" : {
+      "Type" : "AWS::EC2::Subnet",
+      "Properties" : {
+        "VpcId" : { "Ref" : "VPC" },
+        "CidrBlock" : { "Ref" : "InternalLoadBalancerSubnetCidrAZ2" },
+        "AvailabilityZone" : { "Fn::Select" : [ "1", { "Fn::GetAZs" : "" } ] },
+        "Tags" : [
+          {
+            "Key" : "purpose",
+            "Value" : "internal load balancers"
+          },
+          {
+            "Key" : "stack",
+            "Value" : { "Ref" : "EnvironmentName" }
+          },
+          {
+            "Key" : "network",
+            "Value" : "internal"
+          },
+          {
+            "Key" : "Name",
+            "Value" : "internal load balancers"
+          }
+        ]
+      }
+    },
+    "InternalLoadBalancerSubnetAZ3" : {
+      "Type" : "AWS::EC2::Subnet",
+      "Properties" : {
+        "VpcId" : { "Ref" : "VPC" },
+        "CidrBlock" : { "Ref" : "InternalLoadBalancerSubnetCidrAZ3" },
+        "AvailabilityZone" : { "Fn::Select" : [ "2", { "Fn::GetAZs" : "" } ] },
+        "Tags" : [
+          {
+            "Key" : "purpose",
+            "Value" : "internal load balancers"
+          },
+          {
+            "Key" : "stack",
+            "Value" : { "Ref" : "EnvironmentName" }
+          },
+          {
+            "Key" : "network",
+            "Value" : "internal"
+          },
+          {
+            "Key" : "Name",
+            "Value" : "internal load balancers"
+          }
+        ]
+      }
+    },
+
+    "InternetRouteTable" : {
+      "Type" : "AWS::EC2::RouteTable",
+      "DependsOn" : "AttachIVirtualPrivateGateway",
+      "Properties" : {
+        "VpcId" : {"Ref" : "VPC"},
+        "Tags" : [
+          {
+            "Key" : "Name",
+            "Value" : { "Fn::Join" : [ "-", [ { "Ref" : "AppName" }, { "Ref" : "EnvironmentName" },"internet"] ] }
+          },
+          {
+            "Key" : "purpose",
+            "Value" : "internet"
+          },
+          {
+            "Key" : "stack",
+            "Value" : { "Ref" : "EnvironmentName" }
+          },
+          {
+            "Key" : "network",
+            "Value" : "internet"
+          }
+        ]
+      }
+    },
+
+    "VGWRoutePropInternetRouteTable" : {
+      "Type" : "AWS::EC2::VPNGatewayRoutePropagation",
+      "Properties" : {
+        "RouteTableIds" : [{"Ref" : "InternetRouteTable"}],
+        "VpnGatewayId" : {"Ref" : "VirtualPrivateGateway"}
+      }
+    },
+
+    "InternalRouteTable" : {
+      "Type" : "AWS::EC2::RouteTable",
+      "DependsOn" : "AttachIVirtualPrivateGateway",
+      "Properties" : {
+        "VpcId" : {"Ref" : "VPC"},
+        "Tags" : [
+          {
+            "Key" : "Name",
+            "Value" : { "Fn::Join" : [ "-", [ { "Ref" : "AppName" }, { "Ref" : "EnvironmentName" },"internal"] ] }
+          },
+          {
+            "Key" : "purpose",
+            "Value" : "internal"
+          },
+          {
+            "Key" : "stack",
+            "Value" : { "Ref" : "EnvironmentName" }
+          },
+          {
+            "Key" : "network",
+            "Value" : "internal"
+          }
+        ]
+      }
+    },
+
+    "VGWRoutePropInternalRouteTable" : {
+      "Type" : "AWS::EC2::VPNGatewayRoutePropagation",
+      "Properties" : {
+        "RouteTableIds" : [{"Ref" : "InternalRouteTable"}],
+        "VpnGatewayId" : {"Ref" : "VirtualPrivateGateway"}
+      }
+    },
+
+    "InternetRoute" : {
+      "Type" : "AWS::EC2::Route",
+      "Properties" : {
+        "RouteTableId" : { "Ref" : "InternetRouteTable" },
+        "DestinationCidrBlock" : "0.0.0.0/0",
+        "GatewayId" : { "Ref" : "InternetGateway" }
+      }
+    },
+
+    "InternalRoute" : {
+      "Type" : "AWS::EC2::Route",
+      "Properties" : {
+        "RouteTableId" : { "Ref" : "InternalRouteTable" },
+        "DestinationCidrBlock" : "0.0.0.0/0",
+        "InstanceId" : { "Ref" : "NATInstance" }
+      }
+    },
+
+    "InternetLoadBalancersSubnetRouteTableAssociation1" : {
+      "Type" : "AWS::EC2::SubnetRouteTableAssociation",
+      "Properties" : {
+        "SubnetId" : { "Ref" : "InternetLoadBalancerSubnetAZ1" },
+        "RouteTableId" : { "Ref" : "InternetRouteTable" }
+      }
+    },
+    "InternetLoadBalancersSubnetRouteTableAssociation2" : {
+      "Type" : "AWS::EC2::SubnetRouteTableAssociation",
+      "Properties" : {
+        "SubnetId" : { "Ref" : "InternetLoadBalancerSubnetAZ2" },
+        "RouteTableId" : { "Ref" : "InternetRouteTable" }
+      }
+    },
+    "InternetLoadBalancersSubnetRouteTableAssociation3" : {
+      "Type" : "AWS::EC2::SubnetRouteTableAssociation",
+      "Properties" : {
+        "SubnetId" : { "Ref" : "InternetLoadBalancerSubnetAZ3" },
+        "RouteTableId" : { "Ref" : "InternetRouteTable" }
+      }
+    },
+
+    "InternalLoadBalancersSubnetRouteTableAssociation1" : {
+      "Type" : "AWS::EC2::SubnetRouteTableAssociation",
+      "Properties" : {
+        "SubnetId" : { "Ref" : "InternalLoadBalancerSubnetAZ1" },
+        "RouteTableId" : { "Ref" : "InternalRouteTable" }
+      }
+    },
+    "InternalLoadBalancersSubnetRouteTableAssociation2" : {
+      "Type" : "AWS::EC2::SubnetRouteTableAssociation",
+      "Properties" : {
+        "SubnetId" : { "Ref" : "InternalLoadBalancerSubnetAZ2" },
+        "RouteTableId" : { "Ref" : "InternalRouteTable" }
+      }
+    },
+    "InternalLoadBalancersSubnetRouteTableAssociation3" : {
+      "Type" : "AWS::EC2::SubnetRouteTableAssociation",
+      "Properties" : {
+        "SubnetId" : { "Ref" : "InternalLoadBalancerSubnetAZ3" },
+        "RouteTableId" : { "Ref" : "InternalRouteTable" }
+      }
+    },
+
+    "ApplicationSubnetRouteTableAssociation1" : {
+      "Type" : "AWS::EC2::SubnetRouteTableAssociation",
+      "Properties" : {
+        "SubnetId" : { "Ref" : "ApplicationSubnetAZ1" },
+        "RouteTableId" : { "Ref" : "InternalRouteTable" }
+      }
+    },
+    "ApplicationSubnetRouteTableAssociation2" : {
+      "Type" : "AWS::EC2::SubnetRouteTableAssociation",
+      "Properties" : {
+        "SubnetId" : { "Ref" : "ApplicationSubnetAZ2" },
+        "RouteTableId" : { "Ref" : "InternalRouteTable" }
+      }
+    },
+    "ApplicationSubnetRouteTableAssociation3" : {
+      "Type" : "AWS::EC2::SubnetRouteTableAssociation",
+      "Properties" : {
+        "SubnetId" : { "Ref" : "ApplicationSubnetAZ3" },
+        "RouteTableId" : { "Ref" : "InternalRouteTable" }
+      }
+    },
+
+    "PresentationSubnetRouteTableAssociation1" : {
+      "Type" : "AWS::EC2::SubnetRouteTableAssociation",
+      "Properties" : {
+        "SubnetId" : { "Ref" : "PresentationSubnetAZ1" },
+        "RouteTableId" : { "Ref" : "InternalRouteTable" }
+      }
+    },
+    "PresentationSubnetRouteTableAssociation2" : {
+      "Type" : "AWS::EC2::SubnetRouteTableAssociation",
+      "Properties" : {
+        "SubnetId" : { "Ref" : "PresentationSubnetAZ2" },
+        "RouteTableId" : { "Ref" : "InternalRouteTable" }
+      }
+    },
+    "PresentationSubnetRouteTableAssociation3" : {
+      "Type" : "AWS::EC2::SubnetRouteTableAssociation",
+      "Properties" : {
+        "SubnetId" : { "Ref" : "PresentationSubnetAZ3" },
+        "RouteTableId" : { "Ref" : "InternalRouteTable" }
+      }
+    },
+
+    "DatabaseSubnetRouteTableAssociation1" : {
+      "Type" : "AWS::EC2::SubnetRouteTableAssociation",
+      "Properties" : {
+        "SubnetId" : { "Ref" : "DatabaseSubnetAZ1" },
+        "RouteTableId" : { "Ref" : "InternalRouteTable" }
+      }
+    },
+    "DatabaseSubnetRouteTableAssociation2" : {
+      "Type" : "AWS::EC2::SubnetRouteTableAssociation",
+      "Properties" : {
+        "SubnetId" : { "Ref" : "DatabaseSubnetAZ2" },
+        "RouteTableId" : { "Ref" : "InternalRouteTable" }
+      }
+    },
+    "DatabaseSubnetRouteTableAssociation3" : {
+      "Type" : "AWS::EC2::SubnetRouteTableAssociation",
+      "Properties" : {
+        "SubnetId" : { "Ref" : "DatabaseSubnetAZ3" },
+        "RouteTableId" : { "Ref" : "InternalRouteTable" }
+      }
+    },
+
+    "InternetSubnetAcl" : {
+      "Type" : "AWS::EC2::NetworkAcl",
+      "Properties" : {
+        "VpcId" : {"Ref" : "VPC"},
+        "Tags" : [
+          {
+            "Key" : "Name",
+            "Value" : { "Fn::Join" : [ "-", [ { "Ref" : "AppName" }, { "Ref" : "EnvironmentName" },"internet"] ] }
+          },
+          {
+            "Key" : "layer",
+            "Value" : "network"
+          },
+          {
+            "Key" : "purpose",
+            "Value" : "internet"
+          },
+          {
+            "Key" : "stack",
+            "Value" : { "Ref" : "EnvironmentName" }
+          }
+        ]
+      }
+    },
+
+    "InternalSubnetAcl" : {
+      "Type" : "AWS::EC2::NetworkAcl",
+      "Properties" : {
+        "VpcId" : {"Ref" : "VPC"},
+        "Tags" : [
+          {
+            "Key" : "Name",
+            "Value" : { "Fn::Join" : [ "-", [ { "Ref" : "AppName" }, { "Ref" : "EnvironmentName" },"internal"] ] }
+          },
+          {
+            "Key" : "layer",
+            "Value" : "network"
+          },
+          {
+            "Key" : "purpose",
+            "Value" : "internal"
+          },
+          {
+            "Key" : "stack",
+            "Value" : { "Ref" : "EnvironmentName" }
+          }
+        ]
+      }
+    },
+
+    "InternetInSubnetAclEntry" : {
+      "Type" : "AWS::EC2::NetworkAclEntry",
+      "Properties" : {
+        "NetworkAclId" : {"Ref" : "InternetSubnetAcl"},
+        "RuleNumber" : "32000",
+        "Protocol" : "-1",
+        "RuleAction" : "allow",
+        "Egress" : "false",
+        "CidrBlock" : "0.0.0.0/0",
+        "Icmp" : { "Code" : "-1", "Type" : "-1"},
+        "PortRange" : {"From" : "1", "To" : "65535"}
+      }
+    },
+
+    "InternetOutSubnetAclEntry" : {
+      "Type" : "AWS::EC2::NetworkAclEntry",
+      "Properties" : {
+        "NetworkAclId" : {"Ref" : "InternetSubnetAcl"},
+        "RuleNumber" : "32000",
+        "Protocol" : "-1",
+        "RuleAction" : "allow",
+        "Egress" : "true",
+        "CidrBlock" : "0.0.0.0/0",
+        "Icmp" : { "Code" : "-1", "Type" : "-1"},
+        "PortRange" : {"From" : "1", "To" : "65535"}
+      }
+    },
+
+    "InternalInSubnetAclEntry" : {
+      "Type" : "AWS::EC2::NetworkAclEntry",
+      "Properties" : {
+        "NetworkAclId" : {"Ref" : "InternalSubnetAcl"},
+        "RuleNumber" : "32000",
+        "Protocol" : "-1",
+        "RuleAction" : "allow",
+        "Egress" : "false",
+        "CidrBlock" : "0.0.0.0/0",
+        "Icmp" : { "Code" : "-1", "Type" : "-1"},
+        "PortRange" : {"From" : "1", "To" : "65535"}
+      }
+    },
+
+    "InternalOutSubnetAclEntry" : {
+      "Type" : "AWS::EC2::NetworkAclEntry",
+      "Properties" : {
+        "NetworkAclId" : {"Ref" : "InternalSubnetAcl"},
+        "RuleNumber" : "32000",
+        "Protocol" : "-1",
+        "RuleAction" : "allow",
+        "Egress" : "true",
+        "CidrBlock" : "0.0.0.0/0",
+        "Icmp" : { "Code" : "-1", "Type" : "-1"},
+        "PortRange" : {"From" : "1", "To" : "65535"}
+      }
+    },
+
+    "InternetSubnetAclAssociation11" : {
+      "Type" : "AWS::EC2::SubnetNetworkAclAssociation",
+      "Properties" : {
+        "SubnetId" : { "Ref" : "InternetLoadBalancerSubnetAZ1" },
+        "NetworkAclId" : {"Ref" : "InternetSubnetAcl"}
+      }
+    },
+    "InternetSubnetAclAssociation12" : {
+      "Type" : "AWS::EC2::SubnetNetworkAclAssociation",
+      "Properties" : {
+        "SubnetId" : { "Ref" : "InternetLoadBalancerSubnetAZ2" },
+        "NetworkAclId" : {"Ref" : "InternetSubnetAcl"}
+      }
+    },
+    "InternetSubnetAclAssociation13" : {
+      "Type" : "AWS::EC2::SubnetNetworkAclAssociation",
+      "Properties" : {
+        "SubnetId" : { "Ref" : "InternetLoadBalancerSubnetAZ3" },
+        "NetworkAclId" : {"Ref" : "InternetSubnetAcl"}
+      }
+    },
+    "InternalSubnetAclAssociation11" : {
+      "Type" : "AWS::EC2::SubnetNetworkAclAssociation",
+      "Properties" : {
+        "SubnetId" : { "Ref" : "ApplicationSubnetAZ1" },
+        "NetworkAclId" : {"Ref" : "InternalSubnetAcl"}
+      }
+    },
+    "InternalSubnetAclAssociation12" : {
+      "Type" : "AWS::EC2::SubnetNetworkAclAssociation",
+      "Properties" : {
+        "SubnetId" : { "Ref" : "ApplicationSubnetAZ2" },
+        "NetworkAclId" : {"Ref" : "InternalSubnetAcl"}
+      }
+    },
+    "InternalSubnetAclAssociation13" : {
+      "Type" : "AWS::EC2::SubnetNetworkAclAssociation",
+      "Properties" : {
+        "SubnetId" : { "Ref" : "ApplicationSubnetAZ3" },
+        "NetworkAclId" : {"Ref" : "InternalSubnetAcl"}
+      }
+    },
+
+    "InternalSubnetAclAssociation21" : {
+      "Type" : "AWS::EC2::SubnetNetworkAclAssociation",
+      "Properties" : {
+        "SubnetId" : { "Ref" : "InternalLoadBalancerSubnetAZ1" },
+        "NetworkAclId" : {"Ref" : "InternalSubnetAcl"}
+      }
+    },
+    "InternalSubnetAclAssociation22" : {
+      "Type" : "AWS::EC2::SubnetNetworkAclAssociation",
+      "Properties" : {
+        "SubnetId" : { "Ref" : "InternalLoadBalancerSubnetAZ2" },
+        "NetworkAclId" : {"Ref" : "InternalSubnetAcl"}
+      }
+    },
+    "InternalSubnetAclAssociation23" : {
+      "Type" : "AWS::EC2::SubnetNetworkAclAssociation",
+      "Properties" : {
+        "SubnetId" : { "Ref" : "InternalLoadBalancerSubnetAZ3" },
+        "NetworkAclId" : {"Ref" : "InternalSubnetAcl"}
+      }
+    },
+
+    "InternalSubnetAclAssociation31" : {
+      "Type" : "AWS::EC2::SubnetNetworkAclAssociation",
+      "Properties" : {
+        "SubnetId" : { "Ref" : "DatabaseSubnetAZ1" },
+        "NetworkAclId" : {"Ref" : "InternalSubnetAcl"}
+      }
+    },
+
+    "InternalSubnetAclAssociation32" : {
+      "Type" : "AWS::EC2::SubnetNetworkAclAssociation",
+      "Properties" : {
+        "SubnetId" : { "Ref" : "DatabaseSubnetAZ2" },
+        "NetworkAclId" : {"Ref" : "InternalSubnetAcl"}
+      }
+    },
+    "InternalSubnetAclAssociation33" : {
+      "Type" : "AWS::EC2::SubnetNetworkAclAssociation",
+      "Properties" : {
+        "SubnetId" : { "Ref" : "DatabaseSubnetAZ3" },
+        "NetworkAclId" : {"Ref" : "InternalSubnetAcl"}
+      }
+    },
+
+    "InternalSubnetAclAssociation41" : {
+      "Type" : "AWS::EC2::SubnetNetworkAclAssociation",
+      "Properties" : {
+        "SubnetId" : { "Ref" : "PresentationSubnetAZ1" },
+        "NetworkAclId" : {"Ref" : "InternalSubnetAcl"}
+      }
+    },
+    "InternalSubnetAclAssociation42" : {
+      "Type" : "AWS::EC2::SubnetNetworkAclAssociation",
+      "Properties" : {
+        "SubnetId" : { "Ref" : "PresentationSubnetAZ2" },
+        "NetworkAclId" : {"Ref" : "InternalSubnetAcl"}
+      }
+    },
+    "InternalSubnetAclAssociation43" : {
+      "Type" : "AWS::EC2::SubnetNetworkAclAssociation",
+      "Properties" : {
+        "SubnetId" : { "Ref" : "PresentationSubnetAZ3" },
+        "NetworkAclId" : {"Ref" : "InternalSubnetAcl"}
+      }
+    },
+
+    "NATInstance" : {
+      "Type" : "AWS::EC2::Instance",
+      "DependsOn" : "InternetGateway",
+      "Metadata" : {
+        "Comment1" : "Install the latest software patches and security updates",
+        "AWS::CloudFormation::Init" : {
+          "config" : {
+            "commands" : {
+              "a1" : {
+                "command" : "/usr/bin/yum update -y"
+              }
+            }
+          }
+        }
+      },
+      "Properties" : {
+        "InstanceType" : { "Ref" : "NATInstanceType" },
+        "ImageId" : {
+          "Fn::FindInMap" : [
+            "NATRegionArch2AMI",
+            {
+              "Ref" : "AWS::Region"
+            },
+            {
+              "Fn::FindInMap" : [
+                "AWSInstanceType2Arch",
+                {
+                  "Ref" : "NATInstanceType"
+                },
+                "Arch"
+              ]
+            }
+          ]
+        },
+        "UserData"       : { "Fn::Base64" : { "Fn::Join" : ["", [
+          "#!/bin/bash -v\n",
+          "yum update -y aws-cfn-bootstrap\n",
+
+          "# Helper function\n",
+          "function error_exit {\n",
+          "  echo $1\n",
+          "}\n",
+          "/opt/aws/bin/cfn-init -s ", { "Ref" : "AWS::StackName" }, " -r NATInstance ",
+          "    --region ", { "Ref" : "AWS::Region" }, " || error_exit 'Failed to run cfn-init'\n",
+
+          "# Update latest security patches\n",
+          "yum update -y\n",
+
+          "# Install yum-cron-security\n",
+          "yum install yum-cron-security -y\n"
+          ]]}
+        },
+        "SourceDestCheck" : "false",
+        "DisableApiTermination" : "true",
+        "Monitoring" : "false",
+        "KeyName" : { "Ref" : "NATKeyName" },
+        "NetworkInterfaces" : [{
+          "GroupSet"                 : [{ "Ref" : "NATSG" }],
+          "AssociatePublicIpAddress" : "true",
+          "DeviceIndex"              : "0",
+          "DeleteOnTermination"      : "true",
+          "SubnetId"                 : { "Ref" : "InternetLoadBalancerSubnetAZ2" }
+        }],
+        "Tags" : [
+          {
+            "Key" : "stack",
+            "Value" : { "Ref" : "EnvironmentName" }
+          },
+          {
+            "Key" : "layer",
+            "Value" : "network"
+          },
+          {
+            "Key" : "Name",
+            "Value" : { "Fn::Join" : [ "-", [ "NAT", { "Ref" : "EnvironmentName" }] ] }
+          }
+        ]
+      }
+    },
+
+    "BastionRole": {
+      "Type": "AWS::IAM::Role",
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Effect": "Allow",
+              "Principal": { "Service": [ "ec2.amazonaws.com" ] },
+              "Action": [ "sts:AssumeRole" ]
+            }
+          ]
+        },
+        "Path": "/"
+      }
+    },
+    "BastionPolicy1": {
+      "Type": "AWS::IAM::Policy",
+      "Properties": {
+        "PolicyName": "EC2-ReadOnly",
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Effect": "Allow",
+              "Action": "ec2:Describe*",
+              "Resource": "*"
+            },
+           {
+             "Effect": "Allow",
+              "Action": "elasticloadbalancing:Describe*",
+              "Resource": "*"
+            },
+           {
+              "Effect": "Allow",
+              "Action": [
+                "cloudwatch:ListMetrics",
+               "cloudwatch:GetMetricStatistics",
+               "cloudwatch:Describe*"
+              ],
+              "Resource": "*"
+            },
+           {
+              "Effect": "Allow",
+             "Action": "autoscaling:Describe*",
+              "Resource": "*"
+           }
+          ]
+        },
+        "Roles": [
+          {
+            "Ref": "BastionRole"
+          }
+        ]
+      }
+    },
+    "BastionInstanceProfile": {
+      "Type": "AWS::IAM::InstanceProfile",
+      "Properties": {
+        "Path": "/",
+        "Roles": [
+          {
+            "Ref": "BastionRole"
+          }
+        ]
+      }
+    },
+
+    "BastionInstance" : {
+      "Type" : "AWS::EC2::Instance",
+      "Metadata" : {
+        "Comment1" : "Install the latest software patches and security updates",
+        "AWS::CloudFormation::Init" : {
+          "config" : {
+            "commands" : {
+              "a1" : {
+                "command" : "/usr/bin/yum update -y"
+              }
+            }
+          }
+        }
+      },
+      "Properties" : {
+        "InstanceType" : { "Ref" : "BastionInstanceType" },
+        "DisableApiTermination" : "true",
+        "KeyName"  : { "Ref" : "AppKeyName" },
+        "SubnetId" : { "Ref" : "ApplicationSubnetAZ1" },
+        "ImageId" : {
+          "Fn::FindInMap" : [
+            "AWSRegionArch2AMI",
+            {
+              "Ref" : "AWS::Region"
+            },
+            {
+              "Fn::FindInMap" : [
+                "AWSInstanceType2Arch",
+                {
+                  "Ref" : "BastionInstanceType"
+                },
+                "Arch"
+              ]
+            }
+          ]
+        },
+        "UserData"       : { "Fn::Base64" : { "Fn::Join" : ["", [
+          "#!/bin/bash -v\n",
+          "yum update -y aws-cfn-bootstrap\n",
+
+          "# Helper function\n",
+          "function error_exit {\n",
+          "  echo $1\n",
+          "}\n",
+          "/opt/aws/bin/cfn-init -s ", { "Ref" : "AWS::StackName" }, " -r BastionInstance ",
+          "    --region ", { "Ref" : "AWS::Region" }, " || error_exit 'Failed to run cfn-init'\n",
+
+          "# Update latest security patches\n",
+          "yum update -y\n",
+
+          "# Install yum-cron-security\n",
+          "yum install yum-cron-security -y\n"
+          ]]}
+        },
+        "SecurityGroupIds" : [{ "Ref" : "ManagementSG" }],
+        "IamInstanceProfile": { "Ref": "BastionInstanceProfile" },
+        "Tags" : [
+          {
+            "Key" : "purpose",
+            "Value" : "Bastion"
+          },
+          {
+            "Key" : "stack",
+            "Value" : { "Fn::Join" : [ "-", [ "Bastion", { "Ref" : "EnvironmentName" }] ] }
+          },
+          {
+            "Key" : "app",
+            "Value" : { "Ref" : "AppName" }
+          },
+          {
+            "Key" : "Name",
+            "Value" : { "Fn::Join" : [ "-", [ "Bastion", { "Ref" : "EnvironmentName" }] ] }
+          }
+        ]
+      }
+    },
+
+   "NATSG" : {
+      "Type" : "AWS::EC2::SecurityGroup",
+      "Properties" : {
+        "GroupDescription" : "NAT Security Group",
+        "VpcId" : {"Ref" : "VPC"},
+        "SecurityGroupIngress" : [
+          { "IpProtocol" : "tcp", "FromPort" : "80", "ToPort" : "80", "CidrIp" : { "Ref" : "VPCCidr" } },
+          { "IpProtocol" : "tcp", "FromPort" : "443", "ToPort" : "443", "CidrIp" : { "Ref" : "VPCCidr" } },
+          { "IpProtocol" : "tcp", "FromPort" : "22", "ToPort" : "22", "CidrIp" : { "Ref" : "CorporateCidrIp" } },
+          { "IpProtocol" : "icmp", "FromPort" : "-1", "ToPort" : "-1", "CidrIp" : { "Ref" : "CorporateCidrIp" } }
+        ],
+        "Tags" : [
+          {
+            "Key" : "Name",
+            "Value" : "NAT"
+          },
+          {
+            "Key" : "purpose",
+            "Value" : "NAT"
+          },
+          {
+            "Key" : "stack",
+            "Value" : { "Ref" : "EnvironmentName" }
+          },
+          {
+            "Key" : "app",
+            "Value" : { "Ref" : "AppName" }
+          }
+        ]
+      }
+    },
+
+    "ManagementSG" : {
+      "Type" : "AWS::EC2::SecurityGroup",
+      "Properties" : {
+        "GroupDescription" : "Management access from Corporate Network",
+        "VpcId" : {"Ref" : "VPC"},
+        "SecurityGroupIngress" : [
+          { "IpProtocol" : "tcp", "FromPort" : "22", "ToPort" : "22", "CidrIp" : { "Ref" : "CorporateCidrIp" } },
+          { "IpProtocol" : "tcp", "FromPort" : "3389", "ToPort" : "3389", "CidrIp" : { "Ref" : "CorporateCidrIp" } },
+          { "IpProtocol" : "icmp", "FromPort" : "-1", "ToPort" : "-1", "CidrIp" : { "Ref" : "CorporateCidrIp" } }
+        ],
+        "Tags" : [
+          {
+            "Key" : "Name",
+            "Value" : "Management"
+          },
+          {
+            "Key" : "purpose",
+            "Value" : "Management"
+          },
+          {
+            "Key" : "stack",
+            "Value" : { "Ref" : "EnvironmentName" }
+          },
+          {
+            "Key" : "app",
+            "Value" : { "Ref" : "AppName" }
+          }
+        ]
+      }
+    }
+
+  },
+
+  "Outputs" : {
+
+    "VPC" : {
+      "Description" : "VPC",
+      "Value" : {"Ref" : "VPC"}
+    },
+
+    "InternetSubnets" : {
+      "Description" : "Internet Subnets",
+      "Value" : { "Fn::Join":["", [
+      {"Ref" : "InternetLoadBalancerSubnetAZ1" }, " (in ", {"Fn::GetAtt" : [ "InternetLoadBalancerSubnetAZ1", "AvailabilityZone" ] }, "), ",
+      {"Ref" : "InternetLoadBalancerSubnetAZ2" }, " (in ", {"Fn::GetAtt" : [ "InternetLoadBalancerSubnetAZ2", "AvailabilityZone" ] }, "), ",
+      {"Ref" : "InternetLoadBalancerSubnetAZ3" }, " (in ", {"Fn::GetAtt" : [ "InternetLoadBalancerSubnetAZ3", "AvailabilityZone" ] }, ") "
+        ]]}
+    },
+
+    "InternalSubnets" : {
+      "Description" : "Internal Subnets",
+      "Value" : { "Fn::Join":["", [
+      {"Ref" : "PresentationSubnetAZ1" }, " (in ", {"Fn::GetAtt" : [ "PresentationSubnetAZ1", "AvailabilityZone" ] }, "), ",
+      {"Ref" : "PresentationSubnetAZ2" }, " (in ", {"Fn::GetAtt" : [ "PresentationSubnetAZ2", "AvailabilityZone" ] }, "), ",
+      {"Ref" : "PresentationSubnetAZ3" }, " (in ", {"Fn::GetAtt" : [ "PresentationSubnetAZ3", "AvailabilityZone" ] }, "), ",
+      {"Ref" : "ApplicationSubnetAZ1" }, " (in ", {"Fn::GetAtt" : [ "ApplicationSubnetAZ1", "AvailabilityZone" ] }, "), ",
+      {"Ref" : "ApplicationSubnetAZ2" }, " (in ", {"Fn::GetAtt" : [ "ApplicationSubnetAZ2", "AvailabilityZone" ] }, "), ",
+      {"Ref" : "ApplicationSubnetAZ3" }, " (in ", {"Fn::GetAtt" : [ "ApplicationSubnetAZ3", "AvailabilityZone" ] }, "), ",
+      {"Ref" : "InternalLoadBalancerSubnetAZ1" }, " (in ", {"Fn::GetAtt" : [ "InternalLoadBalancerSubnetAZ1", "AvailabilityZone" ] }, "), ",
+      {"Ref" : "InternalLoadBalancerSubnetAZ2" }, " (in ", {"Fn::GetAtt" : [ "InternalLoadBalancerSubnetAZ2", "AvailabilityZone" ] }, "), ",
+      {"Ref" : "InternalLoadBalancerSubnetAZ3" }, " (in ", {"Fn::GetAtt" : [ "InternalLoadBalancerSubnetAZ3", "AvailabilityZone" ] }, "), ",
+      {"Ref" : "DatabaseSubnetAZ1" }, " (in ", {"Fn::GetAtt" : [ "DatabaseSubnetAZ1", "AvailabilityZone" ] }, "), ",
+      {"Ref" : "DatabaseSubnetAZ2" }, " (in ", {"Fn::GetAtt" : [ "DatabaseSubnetAZ2", "AvailabilityZone" ] }, "), ",
+      {"Ref" : "DatabaseSubnetAZ3" }, " (in ", {"Fn::GetAtt" : [ "DatabaseSubnetAZ3", "AvailabilityZone" ] }, ") "
+        ]]}
+    },
+
+    "ManagementSG" : {
+      "Description" : "Management Security Group",
+      "Value" : { "Ref" : "ManagementSG" }
+    }
+
+  }
+
+
+}
