@@ -1,21 +1,23 @@
-This [AWS Cloudformation](http://aws.amazon.com/cloudformation/) template was created to ease the creation of new accounts and VPCs and to ensure identical standards are used across the board. The intention, which is why it's called "core" is to be the base infrastructure that the application builds upon.
+These [AWS Cloudformation](http://aws.amazon.com/cloudformation/) templates were created to ease the creation of new accounts and VPCs and to ensure identical standards are followed. The intention, which is why it's called "core" is to provision the base network and access control infrastructure that the application builds upon.
 
-Currently the template will provision a fully functional VPC that provides internet connectivity to private instances and has a network topology that spans two availability zones. It should run in all 8 AWS regions with the exception of GovCloud and Beijin and that can be easily remedied with a small ami-id addition. Specifically it does the following:
+Currently the templates will each provision a fully functional VPC that provides internet connectivity to private instances and has a network topology that spans two availability zones. They should run in all 8 AWS regions with the exception of GovCloud and Beijin and that can be easily remedied with a small ami-id addition. Specifically they do the following:
 
-* Creates a VPC with the following 5 subnets duplicated in 2 AZs for logical network isolation of each application:
+* Create a VPC with the following 5 subnets duplicated in 2-3 AZs (depending on the template) for logical network isolation of each application:
 	* Internet Facing Load Balancer
 	* Presentation
 	* Internal Facing Load Balancer
 	* Application
 	* Database
-* Provisions a NAT instance in one of the Internet facing subnets and updates all yum packages on boot
-* Attaches an Internet Gateway
-* Attaches a Virtual Private Gateway for private connectivity via VPN or Direct Connect and enables route table propogation
-* Creates and configures a route table for internal subnets and another for internet subnets
-* Tags all resources according to the values passed in via parameters
-* Creates a bastion instance to limit SSH access when connecting to application instances
+* Provision a NAT instance in one of the Internet facing subnets and updates all yum packages on boot
+* Attache an Internet Gateway
+* Attache a Virtual Private Gateway for private connectivity via VPN or Direct Connect and enables route table propogation
+* Create and configure a route table for internal subnets and another for internet subnets
+* Tag all resources according to the values passed in via parameters
+* Create a bastion instance to limit SSH access when connecting to application instances
 
-You have complete control of the CIDRs that govern each subnet so this template can be used to provision a network of virtually any size.
+You have complete control of the CIDRs that govern each subnet so the templates can be used to provision a network of virtually any size.
+
+*** The only difference between core-2az.json and core-3az.json is that one provisions across 2 AZs and the other across 3 AZs otherwise they are identical. ***
 
 
 ##How to run
