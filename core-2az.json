@@ -1082,6 +1082,12 @@
         "DisableApiTermination" : "true",
         "KeyName"  : { "Ref" : "AppKeyName" },
         "SubnetId" : { "Ref" : "ApplicationSubnetAZ1" },
+        "BlockDeviceMappings" : [
+          {
+            "DeviceName" : "/dev/xvda",
+            "Ebs" : { "VolumeSize" : "10", "VolumeType":"gp2" }
+          }
+        ],
         "ImageId" : {
           "Fn::FindInMap" : [
             "AWSRegionArch2AMI",
