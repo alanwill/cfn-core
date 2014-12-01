@@ -1,3 +1,5 @@
+###*** This repo makes use of [Releases](https://github.com/alanwill/cfn-core/releases) so go there to see what's been updated recently ***
+
 These [AWS Cloudformation](http://aws.amazon.com/cloudformation/) templates were created to ease the creation of new accounts and VPCs and to ensure identical standards are followed. The intention, which is why it's called "core" is to provision the base network and access control infrastructure that the application builds upon.
 
 Currently the templates will each provision a fully functional VPC that provides internet connectivity to private instances and has a network topology that spans two availability zones. They should run in all 8 AWS regions with the exception of GovCloud and Beijin and that can be easily remedied with a small ami-id addition. Specifically they do the following:
