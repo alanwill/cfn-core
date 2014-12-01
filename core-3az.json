@@ -8,17 +8,15 @@
     "NATInstanceType" : {
       "Description" : "NAT EC2 instance type, only t1.micro, t2.micro, t2.small, t2.medium and m3.medium",
       "Type" : "String",
-      "Default" : "t1.micro",
-      "AllowedValues" : [ "t1.micro","t2.micro","t2.small","t2.medium","m3.medium" ]
+      "Default" : "t2.micro",
+      "AllowedValues" : [ "t2.micro","t2.small","t2.medium","m3.medium" ]
     },
 
-    "NATKeyName": {
-      "Description" : "Name of an existing EC2 KeyPair to enable SSH access to the NAT instance",
-      "Type": "String",
-      "MinLength": "1",
-      "MaxLength": "255",
-      "AllowedPattern" : "[\\x20-\\x7E]*",
-      "ConstraintDescription" : "can contain only ASCII characters."
+    "NATAMI" : {
+      "Description" : "Optional: AMI to be used for the NAT instance. Leave 'default' for regular NAT instance, otherwise enter your custom AMI ID",
+      "Type" : "String",
+      "Default" : "default",
+      "MaxLength": "12"
     },
 
     "AppKeyName": {
@@ -221,19 +219,48 @@
 
   },
 
+  "Conditions" : {
+    "UseDefaultAMI" : {"Fn::Equals" : [{"Ref" : "NATAMI"}, "default"] }
+  },
+
   "Mappings" : {
     "AWSInstanceType2Arch" : {
-      "t1.micro"   : { "Arch" : "PV64" },
-      "t2.micro"   : { "Arch" : "HVM64" },
-      "t2.small"   : { "Arch" : "HVM64" },
-      "t2.medium"  : { "Arch" : "HVM64" },
-      "m3.medium" : { "Arch" : "HVM64" },
-      "m3.large"   : { "Arch" : "HVM64" },
-      "m3.xlarge"  : { "Arch" : "HVM64" },
-      "m3.2xlarge"  : { "Arch" : "HVM64" },
-      "c3.large"  : { "Arch" : "HVM64" },
-      "c3.xlarge"  : { "Arch" : "HVM64" },
-      "c3.2xlarge"  : { "Arch" : "HVM64" }
+      "t1.micro"    : { "Arch" : "PV64"   },
+      "t2.micro"    : { "Arch" : "HVM64"  },
+      "t2.small"    : { "Arch" : "HVM64"  },
+      "t2.medium"   : { "Arch" : "HVM64"  },
+      "m1.small"    : { "Arch" : "PV64"   },
+      "m1.medium"   : { "Arch" : "PV64"   },
+      "m1.large"    : { "Arch" : "PV64"   },
+      "m1.xlarge"   : { "Arch" : "PV64"   },
+      "m2.xlarge"   : { "Arch" : "PV64"   },
+      "m2.2xlarge"  : { "Arch" : "PV64"   },
+      "m2.4xlarge"  : { "Arch" : "PV64"   },
+      "m3.medium"   : { "Arch" : "HVM64"  },
+      "m3.large"    : { "Arch" : "HVM64"  },
+      "m3.xlarge"   : { "Arch" : "HVM64"  },
+      "m3.2xlarge"  : { "Arch" : "HVM64"  },
+      "c1.medium"   : { "Arch" : "PV64"   },
+      "c1.xlarge"   : { "Arch" : "PV64"   },
+      "c3.large"    : { "Arch" : "HVM64"  },
+      "c3.xlarge"   : { "Arch" : "HVM64"  },
+      "c3.2xlarge"  : { "Arch" : "HVM64"  },
+      "c3.4xlarge"  : { "Arch" : "HVM64"  },
+      "c3.8xlarge"  : { "Arch" : "HVM64"  },
+      "g2.2xlarge"  : { "Arch" : "HVMG2"  },
+      "r3.large"    : { "Arch" : "HVM64"  },
+      "r3.xlarge"   : { "Arch" : "HVM64"  },
+      "r3.2xlarge"  : { "Arch" : "HVM64"  },
+      "r3.4xlarge"  : { "Arch" : "HVM64"  },
+      "r3.8xlarge"  : { "Arch" : "HVM64"  },
+      "i2.xlarge"   : { "Arch" : "HVM64"  },
+      "i2.2xlarge"  : { "Arch" : "HVM64"  },
+      "i2.4xlarge"  : { "Arch" : "HVM64"  },
+      "i2.8xlarge"  : { "Arch" : "HVM64"  },
+      "hi1.4xlarge" : { "Arch" : "HVM64"  },
+      "hs1.8xlarge" : { "Arch" : "HVM64"  },
+      "cr1.8xlarge" : { "Arch" : "HVM64"  },
+      "cc2.8xlarge" : { "Arch" : "HVM64"  }
     },
     "AWSRegionArch2AMI" : {
       "us-west-2"  : {"HVM64" : "ami-383a5008"},
@@ -246,18 +273,83 @@
       "sa-east-1"  : {"HVM64" : "ami-635dff7e"}
     },
     "NATRegionArch2AMI" : {
-      "us-west-2"      : {"PV64" : "ami-f032acc0"},
-      "us-west-1"      : {"PV64" : "ami-d69aad93"},
-      "us-east-1"      : {"PV64" : "ami-ad227cc4"},
-      "eu-west-1"      : {"PV64" : "ami-f3e30084"},
-      "ap-southeast-1"      : {"PV64" : "ami-f22772a0"},
-      "ap-northeast-1"      : {"PV64" : "ami-cd43d9cc"},
-      "ap-southeast-2"      : {"PV64" : "ami-3bae3201"},
-      "sa-east-1"      : {"PV64" : "ami-d78325ca"}
+      "us-west-2"      : {"HVM64" : "ami-290f4119"},
+      "us-west-1"      : {"HVM64" : "ami-a98396ec"},
+      "us-east-1"      : {"HVM64" : "ami-184dc970"},
+      "eu-west-1"      : {"HVM64" : "ami-14913f63"},
+      "eu-central-1"      : {"HVM64" : "ami-ae380eb3"},
+      "ap-southeast-1"      : {"HVM64" : "ami-ac5c7afe"},
+      "ap-northeast-1"      : {"HVM64" : "ami-27d6e626"},
+      "ap-southeast-2"      : {"HVM64" : "ami-893f53b3"},
+      "sa-east-1"      : {"HVM64" : "ami-8122969c"}
+    },
+    "Region2Principal" : {
+      "us-east-1"      : { "EC2Principal" : "ec2.amazonaws.com", "OpsWorksPrincipal" : "opsworks.amazonaws.com" },
+      "us-west-2"      : { "EC2Principal" : "ec2.amazonaws.com", "OpsWorksPrincipal" : "opsworks.amazonaws.com" },
+      "us-west-1"      : { "EC2Principal" : "ec2.amazonaws.com", "OpsWorksPrincipal" : "opsworks.amazonaws.com" },
+      "eu-west-1"      : { "EC2Principal" : "ec2.amazonaws.com", "OpsWorksPrincipal" : "opsworks.amazonaws.com" },
+      "ap-southeast-1" : { "EC2Principal" : "ec2.amazonaws.com", "OpsWorksPrincipal" : "opsworks.amazonaws.com" },
+      "ap-northeast-1" : { "EC2Principal" : "ec2.amazonaws.com", "OpsWorksPrincipal" : "opsworks.amazonaws.com" },
+      "ap-southeast-2" : { "EC2Principal" : "ec2.amazonaws.com", "OpsWorksPrincipal" : "opsworks.amazonaws.com" },
+      "sa-east-1"      : { "EC2Principal" : "ec2.amazonaws.com", "OpsWorksPrincipal" : "opsworks.amazonaws.com" },
+      "cn-north-1"     : { "EC2Principal" : "ec2.amazonaws.com.cn", "OpsWorksPrincipal" : "opsworks.amazonaws.com.cn" },
+      "eu-central-1"   : { "EC2Principal" : "ec2.amazonaws.com", "OpsWorksPrincipal" : "opsworks.amazonaws.com" }
+    },
+    "Region2ARNPrefix": {
+      "us-east-1"      : { "ARNPrefix": "arn:aws:" },
+      "us-west-1"      : { "ARNPrefix": "arn:aws:" },
+      "us-west-2"      : { "ARNPrefix": "arn:aws:" },
+      "eu-west-1"      : { "ARNPrefix": "arn:aws:" },
+      "ap-northeast-1" : { "ARNPrefix": "arn:aws:" },
+      "ap-southeast-1" : { "ARNPrefix": "arn:aws:" },
+      "ap-southeast-2" : { "ARNPrefix": "arn:aws:" },
+      "sa-east-1"      : { "ARNPrefix": "arn:aws:" },
+      "cn-north-1"     : { "ARNPrefix": "arn:aws-cn:" },
+      "eu-central-1"   : { "ARNPrefix": "arn:aws:" }
     }
   },
 
   "Resources" : {
+    "LogRole": {
+      "Type": "AWS::IAM::Role",
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Version": "2012-10-17",
+          "Statement": [ {
+            "Effect": "Allow",
+            "Principal": { "Service": [{ "Fn::FindInMap" : ["Region2Principal", {"Ref" : "AWS::Region"}, "EC2Principal"]}] },
+            "Action": [ "sts:AssumeRole" ]
+        } ] },
+        "Path": "/",
+        "Policies": [ {
+          "PolicyName": "LogRolePolicy",
+          "PolicyDocument": {
+            "Version": "2012-10-17",
+            "Statement": [ {
+              "Effect": "Allow",
+              "Action": [ "logs:*" ],
+              "Resource": [ { "Fn::Join" : ["", [ { "Fn::FindInMap" : ["Region2ARNPrefix", {"Ref" : "AWS::Region"}, "ARNPrefix"] },
+                            "logs:*:*:*" ]]}]
+          } ] }
+        } ]
+      }
+    },
+
+    "NATLogRoleInstanceProfile": {
+      "Type": "AWS::IAM::InstanceProfile",
+      "Properties": {
+        "Path": "/",
+        "Roles": [ { "Ref": "LogRole" } ]
+      }
+    },
+
+    "CloudFormationLogs": {
+      "Type": "AWS::Logs::LogGroup",
+      "Properties": {
+        "RetentionInDays": 7
+      }
+    },
+
      "VPC" : {
       "Type" : "AWS::EC2::VPC",
       "Properties" : {
@@ -1161,58 +1253,129 @@
       "Type" : "AWS::EC2::Instance",
       "DependsOn" : "InternetGateway",
       "Metadata" : {
-        "Comment1" : "Install the latest software patches and security updates",
         "AWS::CloudFormation::Init" : {
-          "config" : {
+          "configSets" : {
+            "install_all" : [ "install_cfn", "install_logs" ]
+          },
+
+          "install_cfn" : {
+            "files" : {
+              "/etc/cfn/cfn-hup.conf" : {
+                "content" : { "Fn::Join" : ["", [
+                  "[main]\n",
+                  "stack=", { "Ref" : "AWS::StackId" }, "\n",
+                  "region=", { "Ref" : "AWS::Region" }, "\n"
+                ]]},
+                "mode"    : "000400",
+                "owner"   : "root",
+                "group"   : "root"
+              },
+
+              "/etc/cfn/hooks.d/cfn-auto-reloader.conf" : {
+                "content": { "Fn::Join" : ["", [
+                  "[cfn-auto-reloader-hook]\n",
+                  "triggers=post.update\n",
+                  "path=Resources.NATInstance.Metadata.AWS::CloudFormation::Init\n",
+                  "action=/opt/aws/bin/cfn-init -v ",
+                  "         --stack ", { "Ref" : "AWS::StackName" },
+                  "         --resource NATInstance ",
+                  "         --configsets install_all ",
+                  "         --region ", { "Ref" : "AWS::Region" }, "\n",
+                  "runas=root\n"
+                ]]}
+              }
+            },
+
+            "services" : {
+              "sysvinit" : {
+                "cfn-hup" : { "enabled" : "true", "ensureRunning" : "true",
+                              "files" : ["/etc/cfn/cfn-hup.conf", "/etc/cfn/hooks.d/cfn-auto-reloader.conf"]}
+              }
+            }
+          },
+
+          "install_logs": {
+            "packages" : {
+              "yum" : {
+                "awslogs" : []
+              }
+            },
+
+            "files": {
+              "/etc/awslogs/awslogs.conf": {
+                "content": { "Fn::Join": [ "", [
+                  "[general]\n",
+                  "state_file= /var/awslogs/state/agent-state\n",
+
+                  "[/var/log/cloud-init.log]\n",
+                  "file = /var/log/cloud-init.log\n",
+                  "log_group_name = ", { "Ref": "CloudFormationLogs" }, "\n",
+                  "log_stream_name = {instance_id}/cloud-init.log\n",
+                  "datetime_format = \n",
+
+                  "[/var/log/cloud-init-output.log]\n",
+                  "file = /var/log/cloud-init-output.log\n",
+                  "log_group_name = ", { "Ref": "CloudFormationLogs" }, "\n",
+                  "log_stream_name = {instance_id}/cloud-init-output.log\n",
+                  "datetime_format = \n",
+
+                  "[/var/log/cfn-init.log]\n",
+                  "file = /var/log/cfn-init.log\n",
+                  "log_group_name = ", { "Ref": "CloudFormationLogs" }, "\n",
+                  "log_stream_name = {instance_id}/cfn-init.log\n",
+                  "datetime_format = \n",
+
+                  "[/var/log/cfn-hup.log]\n",
+                  "file = /var/log/cfn-hup.log\n",
+                  "log_group_name = ", { "Ref": "CloudFormationLogs" }, "\n",
+                  "log_stream_name = {instance_id}/cfn-hup.log\n",
+                  "datetime_format = \n",
+
+                  "[/var/log/cfn-wire.log]\n",
+                  "file = /var/log/cfn-wire.log\n",
+                  "log_group_name = ", { "Ref": "CloudFormationLogs" }, "\n",
+                  "log_stream_name = {instance_id}/cfn-wire.log\n",
+                  "datetime_format = \n",
+
+                  "[/var/log/httpd]\n",
+                  "file = /var/log/httpd/*\n",
+                  "log_group_name = ", { "Ref": "CloudFormationLogs" }, "\n",
+                  "log_stream_name = {instance_id}/httpd\n",
+                  "datetime_format = %d/%b/%Y:%H:%M:%S\n"
+                ] ] },
+                "mode": "000444",
+                "owner": "root",
+                "group": "root"
+              }
+            },
             "commands" : {
-              "a1" : {
-                "command" : "/usr/bin/yum update -y"
+              "01_create_state_directory" : {
+                "command" : "mkdir -p /var/awslogs/state"
+              }
+            },
+            "services" : {
+              "sysvinit" : {
+                "awslogs"    : { "enabled" : "true", "ensureRunning" : "true",
+                                 "files" : [ "/etc/awslogs/awslogs.conf" ] }
               }
             }
           }
         }
       },
       "Properties" : {
-        "InstanceType" : { "Ref" : "NATInstanceType" },
-        "ImageId" : {
-          "Fn::FindInMap" : [
-            "NATRegionArch2AMI",
-            {
-              "Ref" : "AWS::Region"
-            },
-            {
-              "Fn::FindInMap" : [
-                "AWSInstanceType2Arch",
-                {
-                  "Ref" : "NATInstanceType"
-                },
-                "Arch"
-              ]
-            }
-          ]
-        },
-        "UserData"       : { "Fn::Base64" : { "Fn::Join" : ["", [
-          "#!/bin/bash -v\n",
-          "yum update -y aws-cfn-bootstrap\n",
-
-          "# Helper function\n",
-          "function error_exit {\n",
-          "  echo $1\n",
-          "}\n",
-          "/opt/aws/bin/cfn-init -s ", { "Ref" : "AWS::StackName" }, " -r NATInstance ",
-          "    --region ", { "Ref" : "AWS::Region" }, " || error_exit 'Failed to run cfn-init'\n",
-
-          "# Update latest security patches\n",
-          "yum update -y\n",
-
-          "# Install yum-cron-security\n",
-          "yum install yum-cron-security -y\n"
-          ]]}
-        },
         "SourceDestCheck" : "false",
         "DisableApiTermination" : "true",
         "Monitoring" : "false",
-        "KeyName" : { "Ref" : "NATKeyName" },
+        "InstanceType" : { "Ref" : "NATInstanceType" },
+        "IamInstanceProfile" : { "Ref" : "NATLogRoleInstanceProfile" },
+        "ImageId" : {
+            "Fn::If" : [
+              "UseDefaultAMI",
+              { "Fn::FindInMap" : [ "NATRegionArch2AMI", { "Ref" : "AWS::Region" },
+                                          { "Fn::FindInMap" : [ "AWSInstanceType2Arch", { "Ref" : "NATInstanceType" },
+                                          "Arch" ] } ] },
+              {"Ref" : "NATAMI"}
+            ]},
         "NetworkInterfaces" : [{
           "GroupSet"                 : [{ "Ref" : "NATSG" }],
           "AssociatePublicIpAddress" : "true",
@@ -1220,6 +1383,21 @@
           "DeleteOnTermination"      : "true",
           "SubnetId"                 : { "Ref" : "InternetLoadBalancerSubnetAZ2" }
         }],
+        "UserData"       : { "Fn::Base64" : { "Fn::Join" : ["", [
+             "#!/bin/bash -xe\n",
+             "yum update -y\n",
+
+             "/opt/aws/bin/cfn-init -v ",
+             "         --stack ", { "Ref" : "AWS::StackName" },
+             "         --resource NATInstance ",
+             "         --configsets install_all ",
+             "         --region ", { "Ref" : "AWS::Region" }, "\n",
+
+             "/opt/aws/bin/cfn-signal -e $? ",
+             "         --stack ", { "Ref" : "AWS::StackName" },
+             "         --resource NATInstance ",
+             "         --region ", { "Ref" : "AWS::Region" }, "\n"
+        ]]}},
         "Tags" : [
           {
             "Key" : "stack",
@@ -1234,6 +1412,11 @@
             "Value" : { "Fn::Join" : [ "-", [ "NAT", { "Ref" : "EnvironmentName" }] ] }
           }
         ]
+      },
+      "CreationPolicy" : {
+        "ResourceSignal" : {
+          "Timeout" : "PT15M"
+        }
       }
     },
 
