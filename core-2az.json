@@ -21,11 +21,8 @@
 
     "AppKeyName": {
       "Description" : "Name of an existing EC2 KeyPair to enable SSH access to the application instances",
-      "Type": "String",
-      "MinLength": "1",
-      "MaxLength": "255",
-      "AllowedPattern" : "[\\x20-\\x7E]*",
-      "ConstraintDescription" : "can contain only ASCII characters."
+      "Type": "AWS::EC2::KeyPair::KeyName",
+      "ConstraintDescription" : "Must be a valid keyname that already exists in the account"
     },
 
     "CorporateCidrIp" : {
@@ -156,8 +153,8 @@
     "EnvironmentName" : {
       "Description" : "What is the environment type, e.g. alpha/beta/prod/test.",
       "Type": "String",
-      "AllowedValues" : [ "alpha","beta","prod","test" ],
-      "ConstraintDescription": "must be either alpha, beta, prod or test."
+      "AllowedValues" : [ "alpha","beta","prod","test","dev","stg","prd" ],
+      "ConstraintDescription": "must be either dev, stg, prod, alpha, beta, prod or test."
     },
 
     "BastionInstanceType" : {
