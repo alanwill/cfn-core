@@ -5,20 +5,6 @@
 
   "Parameters" : {
 
-    "NATInstanceType" : {
-      "Description" : "NAT EC2 instance type, only t1.micro, t2.micro, t2.small, t2.medium and m3.medium",
-      "Type" : "String",
-      "Default" : "t2.micro",
-      "AllowedValues" : [ "t2.micro","t2.small","t2.medium","m3.medium" ]
-    },
-
-    "NATAMI" : {
-      "Description" : "Optional: AMI to be used for the NAT instance. Leave 'default' for regular NAT instance, otherwise enter your custom AMI ID",
-      "Type" : "String",
-      "Default" : "default",
-      "MaxLength": "12"
-    },
-
     "AppKeyName": {
       "Description" : "Name of an existing EC2 KeyPair to enable SSH access to the application instances",
       "Type": "AWS::EC2::KeyPair::KeyName",
@@ -332,18 +318,26 @@
       }
     },
 
-    "NATLogRoleInstanceProfile": {
-      "Type": "AWS::IAM::InstanceProfile",
-      "Properties": {
-        "Path": "/",
-        "Roles": [ { "Ref": "LogRole" } ]
-      }
-    },
-
     "CloudFormationLogs": {
       "Type": "AWS::Logs::LogGroup",
       "Properties": {
         "RetentionInDays": 7
+      }
+    },
+
+    "NATAZ1" : {
+      "DependsOn" : "InternetGateway",
+      "Type" : "AWS::EC2::NatGateway",
+      "Properties" : {
+        "AllocationId" : { "Fn::GetAtt" : ["NATEIPAZ1", "AllocationId"]},
+        "SubnetId" : { "Ref" : "InternetLoadBalancerSubnetAZ1"}
+      }
+    },
+
+    "NATEIPAZ1" : {
+      "Type" : "AWS::EC2::EIP",
+      "Properties" : {
+        "Domain" : "vpc"
       }
     },
 
@@ -910,7 +904,8 @@
       "Properties" : {
         "RouteTableId" : { "Ref" : "InternetRouteTable" },
         "DestinationCidrBlock" : "0.0.0.0/0",
-        "GatewayId" : { "Ref" : "InternetGateway" }
+        "GatewayId" : { "Ref" : "InternetGateway" },
+        "NatGatewayId" : { "Ref" : "NAT" }
       }
     },
 
