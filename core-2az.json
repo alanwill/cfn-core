@@ -710,7 +710,33 @@
         "Tags" : [
           {
             "Key" : "Name",
-            "Value" : { "Fn::Join" : [ "-", [ { "Ref" : "AppName" }, { "Ref" : "EnvironmentName" },"internal"] ] }
+            "Value" : { "Fn::Join" : [ "-", [ { "Ref" : "AppName" }, { "Ref" : "EnvironmentName" },"internal-", { "Fn::Select" : [ "0", { "Fn::GetAZs" : "" } ] }] ] }
+          },
+          {
+            "Key" : "purpose",
+            "Value" : "internal"
+          },
+          {
+            "Key" : "stack",
+            "Value" : { "Ref" : "EnvironmentName" }
+          },
+          {
+            "Key" : "network",
+            "Value" : "internal"
+          }
+        ]
+      }
+    },
+
+    "InternalRouteTableAZ2" : {
+      "Type" : "AWS::EC2::RouteTable",
+      "DependsOn" : "AttachIVirtualPrivateGateway",
+      "Properties" : {
+        "VpcId" : {"Ref" : "VPC"},
+        "Tags" : [
+          {
+            "Key" : "Name",
+            "Value" : { "Fn::Join" : [ "-", [ { "Ref" : "AppName" }, { "Ref" : "EnvironmentName" },"internal-", { "Fn::Select" : [ "1", { "Fn::GetAZs" : "" } ] }] ] }
           },
           {
             "Key" : "purpose",
