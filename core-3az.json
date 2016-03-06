@@ -319,8 +319,44 @@
       }
     },
 
+    "NATAZ2" : {
+      "DependsOn" : "InternetGateway",
+      "Condition" : "ProvisionProdResources",
+      "Type" : "AWS::EC2::NatGateway",
+      "Properties" : {
+        "AllocationId" : { "Fn::GetAtt" : ["NATEIPAZ2", "AllocationId"]},
+        "SubnetId" : { "Ref" : "InternetLoadBalancerSubnetAZ2"}
+      }
+    },
+
+    "NATAZ3" : {
+      "DependsOn" : "InternetGateway",
+      "Condition" : "ProvisionProdResources",
+      "Type" : "AWS::EC2::NatGateway",
+      "Properties" : {
+        "AllocationId" : { "Fn::GetAtt" : ["NATEIPAZ3", "AllocationId"]},
+        "SubnetId" : { "Ref" : "InternetLoadBalancerSubnetAZ3"}
+      }
+    },
+
     "NATEIPAZ1" : {
       "Type" : "AWS::EC2::EIP",
+      "Properties" : {
+        "Domain" : "vpc"
+      }
+    },
+
+    "NATEIPAZ2" : {
+      "Type" : "AWS::EC2::EIP",
+      "Condition" : "ProvisionProdResources",
+      "Properties" : {
+        "Domain" : "vpc"
+      }
+    },
+
+    "NATEIPAZ3" : {
+      "Type" : "AWS::EC2::EIP",
+      "Condition" : "ProvisionProdResources",
       "Properties" : {
         "Domain" : "vpc"
       }
