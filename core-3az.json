@@ -277,6 +277,20 @@
     }
   },
 
+  "Conditions" : {
+      "ProvisionProdResources" : {"Fn::Or" : [
+      {"Fn::Equals" : ["prd", {"Ref" : "EnvironmentName"}]},
+      {"Fn::Equals" : ["prod", {"Ref" : "EnvironmentName"}]}
+      ]},
+      "ProvisionNonProdResources" : {"Fn::Or" : [
+      {"Fn::Equals" : ["alpha", {"Ref" : "EnvironmentName"}]},
+      {"Fn::Equals" : ["beta", {"Ref" : "EnvironmentName"}]},
+      {"Fn::Equals" : ["dev", {"Ref" : "EnvironmentName"}]},
+      {"Fn::Equals" : ["stg", {"Ref" : "EnvironmentName"}]},
+      {"Fn::Equals" : ["test", {"Ref" : "EnvironmentName"}]}
+      ]}
+  },
+
   "Resources" : {
     "LogRole": {
       "Type": "AWS::IAM::Role",
