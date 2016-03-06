@@ -255,17 +255,6 @@
       "ap-southeast-2" : {"HVM64" : "ami-cf4ad2f5"},
       "sa-east-1"  : {"HVM64" : "ami-635dff7e"}
     },
-    "NATRegionArch2AMI" : {
-      "us-west-2"      : {"HVM64" : "ami-290f4119"},
-      "us-west-1"      : {"HVM64" : "ami-a98396ec"},
-      "us-east-1"      : {"HVM64" : "ami-184dc970"},
-      "eu-west-1"      : {"HVM64" : "ami-14913f63"},
-      "eu-central-1"      : {"HVM64" : "ami-ae380eb3"},
-      "ap-southeast-1"      : {"HVM64" : "ami-ac5c7afe"},
-      "ap-northeast-1"      : {"HVM64" : "ami-27d6e626"},
-      "ap-southeast-2"      : {"HVM64" : "ami-893f53b3"},
-      "sa-east-1"      : {"HVM64" : "ami-8122969c"}
-    },
     "Region2Principal" : {
       "us-east-1"      : { "EC2Principal" : "ec2.amazonaws.com", "OpsWorksPrincipal" : "opsworks.amazonaws.com" },
       "us-west-2"      : { "EC2Principal" : "ec2.amazonaws.com", "OpsWorksPrincipal" : "opsworks.amazonaws.com" },
@@ -905,7 +894,6 @@
         "RouteTableId" : { "Ref" : "InternetRouteTable" },
         "DestinationCidrBlock" : "0.0.0.0/0",
         "GatewayId" : { "Ref" : "InternetGateway" },
-        "NatGatewayId" : { "Ref" : "NAT" }
       }
     },
 
@@ -1250,174 +1238,7 @@
       }
     },
 
-    "NATInstance" : {
-      "Type" : "AWS::EC2::Instance",
-      "DependsOn" : "InternetGateway",
-      "Metadata" : {
-        "AWS::CloudFormation::Init" : {
-          "configSets" : {
-            "install_all" : [ "install_cfn", "install_logs" ]
-          },
-
-          "install_cfn" : {
-            "files" : {
-              "/etc/cfn/cfn-hup.conf" : {
-                "content" : { "Fn::Join" : ["", [
-                  "[main]\n",
-                  "stack=", { "Ref" : "AWS::StackId" }, "\n",
-                  "region=", { "Ref" : "AWS::Region" }, "\n"
-                ]]},
-                "mode"    : "000400",
-                "owner"   : "root",
-                "group"   : "root"
-              },
-
-              "/etc/cfn/hooks.d/cfn-auto-reloader.conf" : {
-                "content": { "Fn::Join" : ["", [
-                  "[cfn-auto-reloader-hook]\n",
-                  "triggers=post.update\n",
-                  "path=Resources.NATInstance.Metadata.AWS::CloudFormation::Init\n",
-                  "action=/opt/aws/bin/cfn-init -v ",
-                  "         --stack ", { "Ref" : "AWS::StackName" },
-                  "         --resource NATInstance ",
-                  "         --configsets install_all ",
-                  "         --region ", { "Ref" : "AWS::Region" }, "\n",
-                  "runas=root\n"
-                ]]}
-              }
-            },
-
-            "services" : {
-              "sysvinit" : {
-                "cfn-hup" : { "enabled" : "true", "ensureRunning" : "true",
-                              "files" : ["/etc/cfn/cfn-hup.conf", "/etc/cfn/hooks.d/cfn-auto-reloader.conf"]}
-              }
-            }
-          },
-
-          "install_logs": {
-            "packages" : {
-              "yum" : {
-                "awslogs" : []
-              }
-            },
-
-            "files": {
-              "/etc/awslogs/awslogs.conf": {
-                "content": { "Fn::Join": [ "", [
-                  "[general]\n",
-                  "state_file= /var/awslogs/state/agent-state\n",
-
-                  "[/var/log/cloud-init.log]\n",
-                  "file = /var/log/cloud-init.log\n",
-                  "log_group_name = ", { "Ref": "CloudFormationLogs" }, "\n",
-                  "log_stream_name = {instance_id}/cloud-init.log\n",
-                  "datetime_format = \n",
-
-                  "[/var/log/cloud-init-output.log]\n",
-                  "file = /var/log/cloud-init-output.log\n",
-                  "log_group_name = ", { "Ref": "CloudFormationLogs" }, "\n",
-                  "log_stream_name = {instance_id}/cloud-init-output.log\n",
-                  "datetime_format = \n",
-
-                  "[/var/log/cfn-init.log]\n",
-                  "file = /var/log/cfn-init.log\n",
-                  "log_group_name = ", { "Ref": "CloudFormationLogs" }, "\n",
-                  "log_stream_name = {instance_id}/cfn-init.log\n",
-                  "datetime_format = \n",
-
-                  "[/var/log/cfn-hup.log]\n",
-                  "file = /var/log/cfn-hup.log\n",
-                  "log_group_name = ", { "Ref": "CloudFormationLogs" }, "\n",
-                  "log_stream_name = {instance_id}/cfn-hup.log\n",
-                  "datetime_format = \n",
-
-                  "[/var/log/cfn-wire.log]\n",
-                  "file = /var/log/cfn-wire.log\n",
-                  "log_group_name = ", { "Ref": "CloudFormationLogs" }, "\n",
-                  "log_stream_name = {instance_id}/cfn-wire.log\n",
-                  "datetime_format = \n",
-
-                  "[/var/log/httpd]\n",
-                  "file = /var/log/httpd/*\n",
-                  "log_group_name = ", { "Ref": "CloudFormationLogs" }, "\n",
-                  "log_stream_name = {instance_id}/httpd\n",
-                  "datetime_format = %d/%b/%Y:%H:%M:%S\n"
-                ] ] },
-                "mode": "000444",
-                "owner": "root",
-                "group": "root"
-              }
-            },
-            "commands" : {
-              "01_create_state_directory" : {
-                "command" : "mkdir -p /var/awslogs/state"
-              }
-            },
-            "services" : {
-              "sysvinit" : {
-                "awslogs"    : { "enabled" : "true", "ensureRunning" : "true",
-                                 "files" : [ "/etc/awslogs/awslogs.conf" ] }
-              }
-            }
-          }
-        }
-      },
       "Properties" : {
-        "SourceDestCheck" : "false",
-        "DisableApiTermination" : "true",
-        "Monitoring" : "false",
-        "InstanceType" : { "Ref" : "NATInstanceType" },
-        "IamInstanceProfile" : { "Ref" : "NATLogRoleInstanceProfile" },
-        "ImageId" : {
-            "Fn::If" : [
-              "UseDefaultAMI",
-              { "Fn::FindInMap" : [ "NATRegionArch2AMI", { "Ref" : "AWS::Region" },
-                                          { "Fn::FindInMap" : [ "AWSInstanceType2Arch", { "Ref" : "NATInstanceType" },
-                                          "Arch" ] } ] },
-              {"Ref" : "NATAMI"}
-            ]},
-        "NetworkInterfaces" : [{
-          "GroupSet"                 : [{ "Ref" : "NATSG" }],
-          "AssociatePublicIpAddress" : "true",
-          "DeviceIndex"              : "0",
-          "DeleteOnTermination"      : "true",
-          "SubnetId"                 : { "Ref" : "InternetLoadBalancerSubnetAZ2" }
-        }],
-        "UserData"       : { "Fn::Base64" : { "Fn::Join" : ["", [
-             "#!/bin/bash -xe\n",
-             "yum update -y\n",
-
-             "/opt/aws/bin/cfn-init -v ",
-             "         --stack ", { "Ref" : "AWS::StackName" },
-             "         --resource NATInstance ",
-             "         --configsets install_all ",
-             "         --region ", { "Ref" : "AWS::Region" }, "\n",
-
-             "/opt/aws/bin/cfn-signal -e $? ",
-             "         --stack ", { "Ref" : "AWS::StackName" },
-             "         --resource NATInstance ",
-             "         --region ", { "Ref" : "AWS::Region" }, "\n"
-        ]]}},
-        "Tags" : [
-          {
-            "Key" : "stack",
-            "Value" : { "Ref" : "EnvironmentName" }
-          },
-          {
-            "Key" : "layer",
-            "Value" : "network"
-          },
-          {
-            "Key" : "Name",
-            "Value" : { "Fn::Join" : [ "-", [ "NAT", { "Ref" : "EnvironmentName" }] ] }
-          }
-        ]
-      },
-      "CreationPolicy" : {
-        "ResourceSignal" : {
-          "Timeout" : "PT15M"
-        }
       }
     },
 
@@ -1565,41 +1386,6 @@
           {
             "Key" : "Name",
             "Value" : { "Fn::Join" : [ "-", [ "Bastion", { "Ref" : "EnvironmentName" }] ] }
-          }
-        ]
-      }
-    },
-
-   "NATSG" : {
-      "Type" : "AWS::EC2::SecurityGroup",
-      "Properties" : {
-        "GroupDescription" : "NAT Security Group",
-        "VpcId" : {"Ref" : "VPC"},
-        "SecurityGroupIngress" : [
-          { "IpProtocol" : "tcp", "FromPort" : "80", "ToPort" : "80", "CidrIp" : { "Ref" : "VPCCidr" } },
-          { "IpProtocol" : "tcp", "FromPort" : "443", "ToPort" : "443", "CidrIp" : { "Ref" : "VPCCidr" } },
-          { "IpProtocol" : "tcp", "FromPort" : "123", "ToPort" : "123", "CidrIp" : { "Ref" : "VPCCidr" } },
-          { "IpProtocol" : "udp", "FromPort" : "123", "ToPort" : "123", "CidrIp" : { "Ref" : "VPCCidr" } },
-          { "IpProtocol" : "tcp", "FromPort" : "25", "ToPort" : "25", "CidrIp" : { "Ref" : "VPCCidr" } },
-          { "IpProtocol" : "tcp", "FromPort" : "22", "ToPort" : "22", "CidrIp" : { "Ref" : "CorporateCidrIp" } },
-          { "IpProtocol" : "icmp", "FromPort" : "-1", "ToPort" : "-1", "CidrIp" : { "Ref" : "CorporateCidrIp" } }
-        ],
-        "Tags" : [
-          {
-            "Key" : "Name",
-            "Value" : "NAT"
-          },
-          {
-            "Key" : "purpose",
-            "Value" : "NAT"
-          },
-          {
-            "Key" : "stack",
-            "Value" : { "Ref" : "EnvironmentName" }
-          },
-          {
-            "Key" : "app",
-            "Value" : { "Ref" : "AppName" }
           }
         ]
       }
