@@ -886,7 +886,7 @@
       }
     },
 
-    "InternalRouteTable" : {
+    "InternalRouteTableAZ1" : {
       "Type" : "AWS::EC2::RouteTable",
       "DependsOn" : "AttachIVirtualPrivateGateway",
       "Properties" : {
@@ -912,12 +912,62 @@
       }
     },
 
+    "InternalRouteTableAZ2" : {
+      "Type" : "AWS::EC2::RouteTable",
+      "DependsOn" : "AttachIVirtualPrivateGateway",
+      "Properties" : {
+        "VpcId" : {"Ref" : "VPC"},
+        "Tags" : [
+          {
+            "Key" : "Name",
             "Value" : { "Fn::Join" : [ "-", [ { "Ref" : "AppName" }, { "Ref" : "EnvironmentName" },"internal-", { "Fn::Select" : [ "1", { "Fn::GetAZs" : "" } ] }] ] }
+          },
+          {
+            "Key" : "purpose",
+            "Value" : "internal"
+          },
+          {
+            "Key" : "stack",
+            "Value" : { "Ref" : "EnvironmentName" }
+          },
+          {
+            "Key" : "network",
+            "Value" : "internal"
+          }
+        ]
+      }
+    },
+
+    "InternalRouteTableAZ3" : {
+      "Type" : "AWS::EC2::RouteTable",
+      "DependsOn" : "AttachIVirtualPrivateGateway",
+      "Properties" : {
+        "VpcId" : {"Ref" : "VPC"},
+        "Tags" : [
+          {
+            "Key" : "Name",
             "Value" : { "Fn::Join" : [ "-", [ { "Ref" : "AppName" }, { "Ref" : "EnvironmentName" },"internal-", { "Fn::Select" : [ "2", { "Fn::GetAZs" : "" } ] }] ] }
+          },
+          {
+            "Key" : "purpose",
+            "Value" : "internal"
+          },
+          {
+            "Key" : "stack",
+            "Value" : { "Ref" : "EnvironmentName" }
+          },
+          {
+            "Key" : "network",
+            "Value" : "internal"
+          }
+        ]
+      }
+    },
+
     "VGWRoutePropInternalRouteTable" : {
       "Type" : "AWS::EC2::VPNGatewayRoutePropagation",
       "Properties" : {
-        "RouteTableIds" : [{"Ref" : "InternalRouteTable"}],
+        "RouteTableIds" : [{"Ref" : "InternalRouteTableAZ1"}, {"Ref" : "InternalRouteTableAZ2"}, {"Ref" : "InternalRouteTableAZ3"}],
         "VpnGatewayId" : {"Ref" : "VirtualPrivateGateway"}
       }
     },
@@ -927,16 +977,56 @@
       "Properties" : {
         "RouteTableId" : { "Ref" : "InternetRouteTable" },
         "DestinationCidrBlock" : "0.0.0.0/0",
-        "GatewayId" : { "Ref" : "InternetGateway" },
+        "GatewayId" : { "Ref" : "InternetGateway" }
       }
     },
 
-    "InternalRoute" : {
+    "InternalRouteAZ1" : {
       "Type" : "AWS::EC2::Route",
       "Properties" : {
-        "RouteTableId" : { "Ref" : "InternalRouteTable" },
+        "RouteTableId" : { "Ref" : "InternalRouteTableAZ1" },
         "DestinationCidrBlock" : "0.0.0.0/0",
-        "InstanceId" : { "Ref" : "NATInstance" }
+        "NatGatewayId" : { "Ref" : "NATAZ1" }
+      }
+    },
+
+    "InternalRouteAZ2PRD" : {
+      "Type" : "AWS::EC2::Route",
+      "Condition" : "ProvisionProdResources",
+      "Properties" : {
+        "RouteTableId" : { "Ref" : "InternalRouteTableAZ2" },
+        "DestinationCidrBlock" : "0.0.0.0/0",
+        "NatGatewayId" : { "Ref" : "NATAZ2" }
+      }
+    },
+
+    "InternalRouteAZ3PRD" : {
+      "Type" : "AWS::EC2::Route",
+      "Condition" : "ProvisionProdResources",
+      "Properties" : {
+        "RouteTableId" : { "Ref" : "InternalRouteTableAZ3" },
+        "DestinationCidrBlock" : "0.0.0.0/0",
+        "NatGatewayId" : { "Ref" : "NATAZ3" }
+      }
+    },
+
+    "InternalRouteAZ2NonPRD" : {
+      "Type" : "AWS::EC2::Route",
+      "Condition" : "ProvisionNonProdResources",
+      "Properties" : {
+        "RouteTableId" : { "Ref" : "InternalRouteTableAZ2" },
+        "DestinationCidrBlock" : "0.0.0.0/0",
+        "NatGatewayId" : { "Ref" : "NATAZ1" }
+      }
+    },
+
+    "InternalRouteAZ3NonPRD" : {
+      "Type" : "AWS::EC2::Route",
+      "Condition" : "ProvisionNonProdResources",
+      "Properties" : {
+        "RouteTableId" : { "Ref" : "InternalRouteTableAZ3" },
+        "DestinationCidrBlock" : "0.0.0.0/0",
+        "NatGatewayId" : { "Ref" : "NATAZ1" }
       }
     },
 
@@ -967,7 +1057,7 @@
       "Type" : "AWS::EC2::SubnetRouteTableAssociation",
       "Properties" : {
         "SubnetId" : { "Ref" : "InternalLoadBalancerSubnetAZ1" },
-        "RouteTableId" : { "Ref" : "InternalRouteTable" }
+        "RouteTableId" : { "Ref" : "InternalRouteTableAZ1" }
       }
     },
 
@@ -975,14 +1065,14 @@
       "Type" : "AWS::EC2::SubnetRouteTableAssociation",
       "Properties" : {
         "SubnetId" : { "Ref" : "InternalLoadBalancerSubnetAZ2" },
-        "RouteTableId" : { "Ref" : "InternalRouteTable" }
+        "RouteTableId" : { "Ref" : "InternalRouteTableAZ2" }
       }
     },
     "InternalLoadBalancersSubnetRouteTableAssociation3" : {
       "Type" : "AWS::EC2::SubnetRouteTableAssociation",
       "Properties" : {
         "SubnetId" : { "Ref" : "InternalLoadBalancerSubnetAZ3" },
-        "RouteTableId" : { "Ref" : "InternalRouteTable" }
+        "RouteTableId" : { "Ref" : "InternalRouteTableAZ3" }
       }
     },
 
@@ -990,21 +1080,21 @@
       "Type" : "AWS::EC2::SubnetRouteTableAssociation",
       "Properties" : {
         "SubnetId" : { "Ref" : "ApplicationSubnetAZ1" },
-        "RouteTableId" : { "Ref" : "InternalRouteTable" }
+        "RouteTableId" : { "Ref" : "InternalRouteTableAZ1" }
       }
     },
     "ApplicationSubnetRouteTableAssociation2" : {
       "Type" : "AWS::EC2::SubnetRouteTableAssociation",
       "Properties" : {
         "SubnetId" : { "Ref" : "ApplicationSubnetAZ2" },
-        "RouteTableId" : { "Ref" : "InternalRouteTable" }
+        "RouteTableId" : { "Ref" : "InternalRouteTableAZ2" }
       }
     },
     "ApplicationSubnetRouteTableAssociation3" : {
       "Type" : "AWS::EC2::SubnetRouteTableAssociation",
       "Properties" : {
         "SubnetId" : { "Ref" : "ApplicationSubnetAZ3" },
-        "RouteTableId" : { "Ref" : "InternalRouteTable" }
+        "RouteTableId" : { "Ref" : "InternalRouteTableAZ3" }
       }
     },
 
@@ -1012,21 +1102,21 @@
       "Type" : "AWS::EC2::SubnetRouteTableAssociation",
       "Properties" : {
         "SubnetId" : { "Ref" : "PresentationSubnetAZ1" },
-        "RouteTableId" : { "Ref" : "InternalRouteTable" }
+        "RouteTableId" : { "Ref" : "InternalRouteTableAZ1" }
       }
     },
     "PresentationSubnetRouteTableAssociation2" : {
       "Type" : "AWS::EC2::SubnetRouteTableAssociation",
       "Properties" : {
         "SubnetId" : { "Ref" : "PresentationSubnetAZ2" },
-        "RouteTableId" : { "Ref" : "InternalRouteTable" }
+        "RouteTableId" : { "Ref" : "InternalRouteTableAZ2" }
       }
     },
     "PresentationSubnetRouteTableAssociation3" : {
       "Type" : "AWS::EC2::SubnetRouteTableAssociation",
       "Properties" : {
         "SubnetId" : { "Ref" : "PresentationSubnetAZ3" },
-        "RouteTableId" : { "Ref" : "InternalRouteTable" }
+        "RouteTableId" : { "Ref" : "InternalRouteTableAZ3" }
       }
     },
 
@@ -1034,21 +1124,21 @@
       "Type" : "AWS::EC2::SubnetRouteTableAssociation",
       "Properties" : {
         "SubnetId" : { "Ref" : "DatabaseSubnetAZ1" },
-        "RouteTableId" : { "Ref" : "InternalRouteTable" }
+        "RouteTableId" : { "Ref" : "InternalRouteTableAZ1" }
       }
     },
     "DatabaseSubnetRouteTableAssociation2" : {
       "Type" : "AWS::EC2::SubnetRouteTableAssociation",
       "Properties" : {
         "SubnetId" : { "Ref" : "DatabaseSubnetAZ2" },
-        "RouteTableId" : { "Ref" : "InternalRouteTable" }
+        "RouteTableId" : { "Ref" : "InternalRouteTableAZ2" }
       }
     },
     "DatabaseSubnetRouteTableAssociation3" : {
       "Type" : "AWS::EC2::SubnetRouteTableAssociation",
       "Properties" : {
         "SubnetId" : { "Ref" : "DatabaseSubnetAZ3" },
-        "RouteTableId" : { "Ref" : "InternalRouteTable" }
+        "RouteTableId" : { "Ref" : "InternalRouteTableAZ3" }
       }
     },
 
