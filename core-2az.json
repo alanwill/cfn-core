@@ -962,7 +962,7 @@
       }
     },
 
-    "InternetSubnetAclAssociation1" : {
+    "InternetSubnetAclAssociation11" : {
       "Type" : "AWS::EC2::SubnetNetworkAclAssociation",
       "Properties" : {
         "SubnetId" : { "Ref" : "InternetLoadBalancerSubnetAZ1" },
@@ -970,7 +970,7 @@
       }
     },
 
-    "InternetSubnetAclAssociation2" : {
+    "InternetSubnetAclAssociation12" : {
       "Type" : "AWS::EC2::SubnetNetworkAclAssociation",
       "Properties" : {
         "SubnetId" : { "Ref" : "InternetLoadBalancerSubnetAZ2" },
@@ -978,7 +978,7 @@
       }
     },
 
-    "InternalSubnetAclAssociation1" : {
+    "InternalSubnetAclAssociation11" : {
       "Type" : "AWS::EC2::SubnetNetworkAclAssociation",
       "Properties" : {
         "SubnetId" : { "Ref" : "ApplicationSubnetAZ1" },
@@ -986,7 +986,7 @@
       }
     },
 
-    "InternalSubnetAclAssociation2" : {
+    "InternalSubnetAclAssociation12" : {
       "Type" : "AWS::EC2::SubnetNetworkAclAssociation",
       "Properties" : {
         "SubnetId" : { "Ref" : "ApplicationSubnetAZ2" },
@@ -994,7 +994,7 @@
       }
     },
 
-    "InternalSubnetAclAssociation3" : {
+    "InternalSubnetAclAssociation21" : {
       "Type" : "AWS::EC2::SubnetNetworkAclAssociation",
       "Properties" : {
         "SubnetId" : { "Ref" : "InternalLoadBalancerSubnetAZ1" },
@@ -1002,7 +1002,7 @@
       }
     },
 
-    "InternalSubnetAclAssociation4" : {
+    "InternalSubnetAclAssociation22" : {
       "Type" : "AWS::EC2::SubnetNetworkAclAssociation",
       "Properties" : {
         "SubnetId" : { "Ref" : "InternalLoadBalancerSubnetAZ2" },
@@ -1010,7 +1010,7 @@
       }
     },
 
-    "InternalSubnetAclAssociation5" : {
+    "InternalSubnetAclAssociation31" : {
       "Type" : "AWS::EC2::SubnetNetworkAclAssociation",
       "Properties" : {
         "SubnetId" : { "Ref" : "DatabaseSubnetAZ1" },
@@ -1018,7 +1018,7 @@
       }
     },
 
-    "InternalSubnetAclAssociation6" : {
+    "InternalSubnetAclAssociation32" : {
       "Type" : "AWS::EC2::SubnetNetworkAclAssociation",
       "Properties" : {
         "SubnetId" : { "Ref" : "DatabaseSubnetAZ2" },
@@ -1026,15 +1026,14 @@
       }
     },
 
-    "InternalSubnetAclAssociation7" : {
+    "InternalSubnetAclAssociation41" : {
       "Type" : "AWS::EC2::SubnetNetworkAclAssociation",
       "Properties" : {
         "SubnetId" : { "Ref" : "PresentationSubnetAZ1" },
         "NetworkAclId" : {"Ref" : "InternalSubnetAcl"}
       }
     },
-
-    "InternalSubnetAclAssociation8" : {
+    "InternalSubnetAclAssociation42" : {
       "Type" : "AWS::EC2::SubnetNetworkAclAssociation",
       "Properties" : {
         "SubnetId" : { "Ref" : "PresentationSubnetAZ2" },
