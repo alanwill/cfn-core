@@ -702,7 +702,7 @@
       }
     },
 
-    "InternalRouteTable" : {
+    "InternalRouteTableAZ1" : {
       "Type" : "AWS::EC2::RouteTable",
       "DependsOn" : "AttachIVirtualPrivateGateway",
       "Properties" : {
@@ -757,7 +757,7 @@
     "VGWRoutePropInternalRouteTable" : {
       "Type" : "AWS::EC2::VPNGatewayRoutePropagation",
       "Properties" : {
-        "RouteTableIds" : [{"Ref" : "InternalRouteTable"}],
+        "RouteTableIds" : [{"Ref" : "InternalRouteTableAZ1"}, {"Ref" : "InternalRouteTableAZ2"}],
         "VpnGatewayId" : {"Ref" : "VirtualPrivateGateway"}
       }
     },
@@ -771,11 +771,32 @@
       }
     },
 
-    "InternalRoute" : {
+    "InternalRouteAZ1" : {
       "Type" : "AWS::EC2::Route",
       "Properties" : {
-        "RouteTableId" : { "Ref" : "InternalRouteTable" },
+        "RouteTableId" : { "Ref" : "InternalRouteTableAZ1" },
         "DestinationCidrBlock" : "0.0.0.0/0",
+        "NatGatewayId" : { "Ref" : "NATAZ1" }
+      }
+    },
+
+    "InternalRouteAZ2PRD" : {
+      "Type" : "AWS::EC2::Route",
+      "Condition" : "ProvisionProdResources",
+      "Properties" : {
+        "RouteTableId" : { "Ref" : "InternalRouteTableAZ2" },
+        "DestinationCidrBlock" : "0.0.0.0/0",
+        "NatGatewayId" : { "Ref" : "NATAZ2" }
+      }
+    },
+
+    "InternalRouteAZ2NonPRD" : {
+      "Type" : "AWS::EC2::Route",
+      "Condition" : "ProvisionNonProdResources",
+      "Properties" : {
+        "RouteTableId" : { "Ref" : "InternalRouteTableAZ2" },
+        "DestinationCidrBlock" : "0.0.0.0/0",
+        "NatGatewayId" : { "Ref" : "NATAZ1" }
       }
     },
 
@@ -799,7 +820,7 @@
       "Type" : "AWS::EC2::SubnetRouteTableAssociation",
       "Properties" : {
         "SubnetId" : { "Ref" : "InternalLoadBalancerSubnetAZ1" },
-        "RouteTableId" : { "Ref" : "InternalRouteTable" }
+        "RouteTableId" : { "Ref" : "InternalRouteTableAZ1" }
       }
     },
 
@@ -807,7 +828,7 @@
       "Type" : "AWS::EC2::SubnetRouteTableAssociation",
       "Properties" : {
         "SubnetId" : { "Ref" : "InternalLoadBalancerSubnetAZ2" },
-        "RouteTableId" : { "Ref" : "InternalRouteTable" }
+        "RouteTableId" : { "Ref" : "InternalRouteTableAZ2" }
       }
     },
 
@@ -815,14 +836,14 @@
       "Type" : "AWS::EC2::SubnetRouteTableAssociation",
       "Properties" : {
         "SubnetId" : { "Ref" : "ApplicationSubnetAZ1" },
-        "RouteTableId" : { "Ref" : "InternalRouteTable" }
+        "RouteTableId" : { "Ref" : "InternalRouteTableAZ1" }
       }
     },
     "ApplicationSubnetRouteTableAssociation2" : {
       "Type" : "AWS::EC2::SubnetRouteTableAssociation",
       "Properties" : {
         "SubnetId" : { "Ref" : "ApplicationSubnetAZ2" },
-        "RouteTableId" : { "Ref" : "InternalRouteTable" }
+        "RouteTableId" : { "Ref" : "InternalRouteTableAZ2" }
       }
     },
 
@@ -830,14 +851,14 @@
       "Type" : "AWS::EC2::SubnetRouteTableAssociation",
       "Properties" : {
         "SubnetId" : { "Ref" : "PresentationSubnetAZ1" },
-        "RouteTableId" : { "Ref" : "InternalRouteTable" }
+        "RouteTableId" : { "Ref" : "InternalRouteTableAZ1" }
       }
     },
     "PresentationSubnetRouteTableAssociation2" : {
       "Type" : "AWS::EC2::SubnetRouteTableAssociation",
       "Properties" : {
         "SubnetId" : { "Ref" : "PresentationSubnetAZ2" },
-        "RouteTableId" : { "Ref" : "InternalRouteTable" }
+        "RouteTableId" : { "Ref" : "InternalRouteTableAZ2" }
       }
     },
 
@@ -845,14 +866,14 @@
       "Type" : "AWS::EC2::SubnetRouteTableAssociation",
       "Properties" : {
         "SubnetId" : { "Ref" : "DatabaseSubnetAZ1" },
-        "RouteTableId" : { "Ref" : "InternalRouteTable" }
+        "RouteTableId" : { "Ref" : "InternalRouteTableAZ1" }
       }
     },
     "DatabaseSubnetRouteTableAssociation2" : {
       "Type" : "AWS::EC2::SubnetRouteTableAssociation",
       "Properties" : {
         "SubnetId" : { "Ref" : "DatabaseSubnetAZ2" },
-        "RouteTableId" : { "Ref" : "InternalRouteTable" }
+        "RouteTableId" : { "Ref" : "InternalRouteTableAZ2" }
       }
     },
 
