@@ -202,10 +202,6 @@
 
   },
 
-  "Conditions" : {
-    "UseDefaultAMI" : {"Fn::Equals" : [{"Ref" : "NATAMI"}, "default"] }
-  },
-
   "Mappings" : {
     "AWSInstanceType2Arch" : {
       "t1.micro"    : { "Arch" : "PV64"   },
