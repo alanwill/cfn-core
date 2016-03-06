@@ -2,7 +2,7 @@
 
 These [AWS Cloudformation](http://aws.amazon.com/cloudformation/) templates were created to ease the creation of new accounts and VPCs and to ensure identical standards are followed. The intention, which is why it's called "core" is to provision the base network and access control infrastructure that the application builds upon.
 
-Currently the templates will each provision a fully functional VPC that provides internet connectivity to private instances and has a network topology that spans two availability zones. They should run in all 8 AWS regions with the exception of GovCloud and Beijin and that can be easily remedied with a small ami-id addition. Specifically they do the following:
+The templates will each provision a fully functional VPC that provides internet connectivity to private instances and has a network topology that spans 2 or 3 availability zones. They should run in all 8 AWS regions with the exception of GovCloud and Beijing and that can be easily remedied with a small ami-id addition. Specifically they do the following:
 
 * Create a VPC with the following 5 subnets duplicated in 2-3 AZs (depending on the template) for logical network isolation of each application:
 	* Internet Facing Load Balancer
@@ -10,10 +10,10 @@ Currently the templates will each provision a fully functional VPC that provides
 	* Internal Facing Load Balancer
 	* Application
 	* Database
-* Provision a NAT instance in one of the Internet facing subnets and updates all yum packages on boot
-* Attache an Internet Gateway
-* Attache a Virtual Private Gateway for private connectivity via VPN or Direct Connect and enables route table propogation
-* Create and configure a route table for internal subnets and another for internet subnets
+* Provision a NAT Gateway in one of the Internet facing subnets or all of the Internet facing subnets if the environment is "prd" or "prod"
+* Attach an Internet Gateway
+* Attach a Virtual Private Gateway for private connectivity via VPN or Direct Connect and enables route table propogation
+* Create and configure route tables for internal subnets and another for internet subnets
 * Tag all resources according to the values passed in via parameters
 * Create a bastion instance to limit SSH access when connecting to application instances
 
@@ -65,7 +65,6 @@ Once Cloudformation provides support for this, I'd like to be able to add:
 * IAM Roles with pre-specified names to work with SAML
 * IAM account alias creation
 * CloudTrail configured in all regions from a single template
-* Import a public EC2 keypair
 
 ##Help
 If something doesn't work as advertised or you have any questions or feedback, please submit a [Github issue](https://github.com/alanwill/cfn-core/issues/new).
