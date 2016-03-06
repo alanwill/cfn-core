@@ -894,7 +894,7 @@
         "Tags" : [
           {
             "Key" : "Name",
-            "Value" : { "Fn::Join" : [ "-", [ { "Ref" : "AppName" }, { "Ref" : "EnvironmentName" },"internal"] ] }
+            "Value" : { "Fn::Join" : [ "-", [ { "Ref" : "AppName" }, { "Ref" : "EnvironmentName" },"internal-", { "Fn::Select" : [ "0", { "Fn::GetAZs" : "" } ] }] ] }
           },
           {
             "Key" : "purpose",
@@ -912,6 +912,8 @@
       }
     },
 
+            "Value" : { "Fn::Join" : [ "-", [ { "Ref" : "AppName" }, { "Ref" : "EnvironmentName" },"internal-", { "Fn::Select" : [ "1", { "Fn::GetAZs" : "" } ] }] ] }
+            "Value" : { "Fn::Join" : [ "-", [ { "Ref" : "AppName" }, { "Ref" : "EnvironmentName" },"internal-", { "Fn::Select" : [ "2", { "Fn::GetAZs" : "" } ] }] ] }
     "VGWRoutePropInternalRouteTable" : {
       "Type" : "AWS::EC2::VPNGatewayRoutePropagation",
       "Properties" : {
