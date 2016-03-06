@@ -1252,7 +1252,7 @@
       "Description" : "Internet Subnets",
       "Value" : { "Fn::Join":["", [
       {"Ref" : "InternetLoadBalancerSubnetAZ1" }, " (in ", {"Fn::GetAtt" : [ "InternetLoadBalancerSubnetAZ1", "AvailabilityZone" ] }, "), ",
-      {"Ref" : "InternetLoadBalancerSubnetAZ2" }, " (in ", {"Fn::GetAtt" : [ "InternetLoadBalancerSubnetAZ2", "AvailabilityZone" ] }, "), "
+      {"Ref" : "InternetLoadBalancerSubnetAZ2" }, " (in ", {"Fn::GetAtt" : [ "InternetLoadBalancerSubnetAZ2", "AvailabilityZone" ] }, ") "
         ]]}
     },
 
@@ -1266,7 +1266,7 @@
       {"Ref" : "InternalLoadBalancerSubnetAZ1" }, " (in ", {"Fn::GetAtt" : [ "InternalLoadBalancerSubnetAZ1", "AvailabilityZone" ] }, "), ",
       {"Ref" : "InternalLoadBalancerSubnetAZ2" }, " (in ", {"Fn::GetAtt" : [ "InternalLoadBalancerSubnetAZ2", "AvailabilityZone" ] }, "), ",
       {"Ref" : "DatabaseSubnetAZ1" }, " (in ", {"Fn::GetAtt" : [ "DatabaseSubnetAZ1", "AvailabilityZone" ] }, "), ",
-      {"Ref" : "DatabaseSubnetAZ2" }, " (in ", {"Fn::GetAtt" : [ "DatabaseSubnetAZ2", "AvailabilityZone" ] }, ")"
+      {"Ref" : "DatabaseSubnetAZ2" }, " (in ", {"Fn::GetAtt" : [ "DatabaseSubnetAZ2", "AvailabilityZone" ] }, ") "
         ]]}
     },
 
