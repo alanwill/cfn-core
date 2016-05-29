@@ -5,12 +5,6 @@
 
   "Parameters" : {
 
-    "AppKeyName": {
-      "Description" : "Name of an existing EC2 KeyPair to enable SSH access to the application instances",
-      "Type": "AWS::EC2::KeyPair::KeyName",
-      "ConstraintDescription" : "Must be a valid keyname that already exists in the account"
-    },
-
     "CorporateCidrIp" : {
       "Description" : "Corporate CidrIp (to restrict traffic to only the corporate IP space)",
       "Type" : "String",
@@ -141,13 +135,6 @@
       "Type": "String",
       "AllowedValues" : [ "alpha","beta","prod","test","dev","stg","prd" ],
       "ConstraintDescription": "must be either dev, stg, prod, alpha, beta, prod or test."
-    },
-
-    "BastionInstanceType" : {
-      "Description" : "Instance type for Bastion",
-      "Type" : "String",
-      "Default" : "t2.micro",
-      "AllowedValues" : [ "t2.micro","t2.small","t2.medium","m3.medium" ]
     }
 
   },
@@ -242,37 +229,6 @@
   },
 
   "Resources" : {
-    "LogRole": {
-      "Type": "AWS::IAM::Role",
-      "Properties": {
-        "AssumeRolePolicyDocument": {
-          "Version": "2012-10-17",
-          "Statement": [ {
-            "Effect": "Allow",
-            "Principal": { "Service": [{ "Fn::FindInMap" : ["Region2Principal", {"Ref" : "AWS::Region"}, "EC2Principal"]}] },
-            "Action": [ "sts:AssumeRole" ]
-        } ] },
-        "Path": "/",
-        "Policies": [ {
-          "PolicyName": "LogRolePolicy",
-          "PolicyDocument": {
-            "Version": "2012-10-17",
-            "Statement": [ {
-              "Effect": "Allow",
-              "Action": [ "logs:*" ],
-              "Resource": [ { "Fn::Join" : ["", [ { "Fn::FindInMap" : ["Region2ARNPrefix", {"Ref" : "AWS::Region"}, "ARNPrefix"] },
-                            "logs:*:*:*" ]]}]
-          } ] }
-        } ]
-      }
-    },
-
-    "CloudFormationLogs": {
-      "Type": "AWS::Logs::LogGroup",
-      "Properties": {
-        "RetentionInDays": 7
-      }
-    },
 
     "NATAZ1" : {
       "DependsOn" : "InternetGateway",
@@ -1078,188 +1034,7 @@
         "ServiceName" : { "Fn::Join": [ "", [ "com.amazonaws.", { "Ref": "AWS::Region" }, ".s3" ] ] },
         "VpcId" : {"Ref" : "VPC"}
       }
-    },
-
-    "BastionRole": {
-      "Type": "AWS::IAM::Role",
-      "Properties": {
-        "AssumeRolePolicyDocument": {
-          "Statement": [
-            {
-              "Effect": "Allow",
-              "Principal": { "Service": [ "ec2.amazonaws.com" ] },
-              "Action": [ "sts:AssumeRole" ]
-            }
-          ]
-        },
-        "Path": "/"
-      }
-    },
-    "BastionPolicy1": {
-      "Type": "AWS::IAM::Policy",
-      "Properties": {
-        "PolicyName": "EC2-ReadOnly",
-        "PolicyDocument": {
-          "Statement": [
-            {
-              "Effect": "Allow",
-              "Action": "ec2:Describe*",
-              "Resource": "*"
-            },
-           {
-             "Effect": "Allow",
-              "Action": "elasticloadbalancing:Describe*",
-              "Resource": "*"
-            },
-           {
-              "Effect": "Allow",
-              "Action": [
-                "cloudwatch:ListMetrics",
-               "cloudwatch:GetMetricStatistics",
-               "cloudwatch:Describe*"
-              ],
-              "Resource": "*"
-            },
-           {
-              "Effect": "Allow",
-             "Action": "autoscaling:Describe*",
-              "Resource": "*"
-           }
-          ]
-        },
-        "Roles": [
-          {
-            "Ref": "BastionRole"
-          }
-        ]
-      }
-    },
-    "BastionInstanceProfile": {
-      "Type": "AWS::IAM::InstanceProfile",
-      "Properties": {
-        "Path": "/",
-        "Roles": [
-          {
-            "Ref": "BastionRole"
-          }
-        ]
-      }
-    },
-
-    "BastionInstance" : {
-      "Type" : "AWS::EC2::Instance",
-      "Metadata" : {
-        "Comment1" : "Install the latest software patches and security updates",
-        "AWS::CloudFormation::Init" : {
-          "config" : {
-            "commands" : {
-              "a1" : {
-                "command" : "/usr/bin/yum update -y"
-              }
-            }
-          }
-        }
-      },
-      "Properties" : {
-        "InstanceType" : { "Ref" : "BastionInstanceType" },
-        "DisableApiTermination" : "true",
-        "KeyName"  : { "Ref" : "AppKeyName" },
-        "SubnetId" : { "Ref" : "ApplicationSubnetAZ1" },
-        "BlockDeviceMappings" : [
-          {
-            "DeviceName" : "/dev/xvda",
-            "Ebs" : { "VolumeSize" : "10", "VolumeType":"gp2" }
-          }
-        ],
-        "ImageId" : {
-          "Fn::FindInMap" : [
-            "AWSRegionArch2AMI",
-            {
-              "Ref" : "AWS::Region"
-            },
-            {
-              "Fn::FindInMap" : [
-                "AWSInstanceType2Arch",
-                {
-                  "Ref" : "BastionInstanceType"
-                },
-                "Arch"
-              ]
-            }
-          ]
-        },
-        "UserData"       : { "Fn::Base64" : { "Fn::Join" : ["", [
-          "#!/bin/bash -v\n",
-          "yum update -y aws-cfn-bootstrap\n",
-
-          "# Helper function\n",
-          "function error_exit {\n",
-          "  echo $1\n",
-          "}\n",
-          "/opt/aws/bin/cfn-init -s ", { "Ref" : "AWS::StackName" }, " -r BastionInstance ",
-          "    --region ", { "Ref" : "AWS::Region" }, " || error_exit 'Failed to run cfn-init'\n",
-
-          "# Update latest security patches\n",
-          "yum update -y\n",
-
-          "# Install yum-cron-security\n",
-          "yum install yum-cron-security -y\n"
-          ]]}
-        },
-        "SecurityGroupIds" : [{ "Ref" : "ManagementSG" }],
-        "IamInstanceProfile": { "Ref": "BastionInstanceProfile" },
-        "Tags" : [
-          {
-            "Key" : "purpose",
-            "Value" : "Bastion"
-          },
-          {
-            "Key" : "stack",
-            "Value" : { "Fn::Join" : [ "-", [ "Bastion", { "Ref" : "EnvironmentName" }] ] }
-          },
-          {
-            "Key" : "app",
-            "Value" : { "Ref" : "AppName" }
-          },
-          {
-            "Key" : "Name",
-            "Value" : { "Fn::Join" : [ "-", [ "Bastion", { "Ref" : "EnvironmentName" }] ] }
-          }
-        ]
-      }
-    },
-
-    "ManagementSG" : {
-      "Type" : "AWS::EC2::SecurityGroup",
-      "Properties" : {
-        "GroupDescription" : "Management access from Corporate Network",
-        "VpcId" : {"Ref" : "VPC"},
-        "SecurityGroupIngress" : [
-          { "IpProtocol" : "tcp", "FromPort" : "22", "ToPort" : "22", "CidrIp" : { "Ref" : "CorporateCidrIp" } },
-          { "IpProtocol" : "tcp", "FromPort" : "3389", "ToPort" : "3389", "CidrIp" : { "Ref" : "CorporateCidrIp" } },
-          { "IpProtocol" : "icmp", "FromPort" : "-1", "ToPort" : "-1", "CidrIp" : { "Ref" : "CorporateCidrIp" } }
-        ],
-        "Tags" : [
-          {
-            "Key" : "Name",
-            "Value" : "Management"
-          },
-          {
-            "Key" : "purpose",
-            "Value" : "Management"
-          },
-          {
-            "Key" : "stack",
-            "Value" : { "Ref" : "EnvironmentName" }
-          },
-          {
-            "Key" : "app",
-            "Value" : { "Ref" : "AppName" }
-          }
-        ]
-      }
     }
-
   },
 
   "Outputs" : {
@@ -1289,11 +1064,6 @@
       {"Ref" : "DatabaseSubnetAZ1" }, " (in ", {"Fn::GetAtt" : [ "DatabaseSubnetAZ1", "AvailabilityZone" ] }, "), ",
       {"Ref" : "DatabaseSubnetAZ2" }, " (in ", {"Fn::GetAtt" : [ "DatabaseSubnetAZ2", "AvailabilityZone" ] }, ") "
         ]]}
-    },
-
-    "ManagementSG" : {
-      "Description" : "Management Security Group",
-      "Value" : { "Ref" : "ManagementSG" }
     }
 
   }
